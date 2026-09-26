@@ -1,0 +1,41 @@
+# Maven
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+backend/nohup.out
+frontend/nohup.out
+
+# Env & Secrets
+.env
+.env.local
+*.pem
+*.key
+backend/ADMIN_CREDENTIALS.txt
+
+# Uploads & Data
+backend/uploads/
+backend/*.pid
+
+# Temp
+*.tmp
+*.bak
+.cache/

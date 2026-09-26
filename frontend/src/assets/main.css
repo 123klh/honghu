@@ -1,0 +1,28 @@
+:root {
+  --hh-primary: #1f5fbf;
+  --hh-bg: #f5f7fa;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--hh-bg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+}
+
+.page { padding: 16px; }
+.page-title { font-size: 20px; font-weight: 600; margin: 0 0 16px; }
+.muted { color: #909399; font-size: 13px; }
+.stem { font-size: 16px; line-height: 1.8; white-space: pre-wrap; }
+.material { max-height: 320px; overflow-y: auto; line-height: 1.9; white-space: pre-wrap;
+  background: #fafafa; padding: 12px; border-radius: 6px; }
+
+/* 移动端：底部导航留白，卡片占满宽度 */
+@media (max-width: 768px) {
+  .page { padding: 12px 10px 72px; }
+  .el-card { border-radius: 10px; }
+  .hide-mobile { display: none !important; }
+}

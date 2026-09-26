@@ -1,0 +1,34 @@
+input rows 7495
+kept objective 7189
+kept subjective 131
+kept paper 86
+rejected 89
+
+-- cleaning actions --
+  collapsed_doubling: 153
+  kept_objective: 7189
+  kept_subjective: 131
+  noise_inline: 2688
+  noise_line: 40
+  section_tail_cut: 17
+
+-- normalize rejects --
+  answer_leaked_into_question: 7
+  duplicate_options: 14
+  option_empty_after_clean: 11
+  option_too_long: 57
+
+-- objective by question_type --
+  常识判断: 2760
+  言语理解与表达: 2200
+  判断推理: 1536
+  数量关系: 376
+  资料分析: 317
+-- objective by source_kind --
+  gk: 3429
+  xingce_5000: 2665
+  changshi_660: 1095
+-- multiple choice rows -- 212
+-- rows carrying shared material -- 317
+-- subjective answer length --
+   min=81 p50=400 max=2466  (all must be >50)

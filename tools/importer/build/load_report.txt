@@ -1,0 +1,17 @@
+
+==============================================================================
+Stage 4: MySQL load
+==============================================================================
+input: D:\复刻lk\honghu\tools\importer\build\normalized.jsonl
+valid papers: 86
+valid objective: 7189
+valid subjective: 131
+retired stale objective: 0
+retired stale subjective: 0
+papers touched: 86
+objective statements: 7189
+fr statements: 131
+knowledge links inserted: 0
+difficulty rows: 2646
+before: {'paper': 88, 'question': 7189, 'fr_question': 137, 'question_knowledge': 7189, 'question_difficulty': 2646, 'question(active)': 7189, 'fr_question(active)': 131}
+after: {'paper': 88, 'question': 7189, 'fr_question': 137, 'question_knowledge': 7189, 'question_difficulty': 2646, 'question(active)': 7189, 'fr_question(active)': 131}
