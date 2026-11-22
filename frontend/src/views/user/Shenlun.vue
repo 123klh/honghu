@@ -77,7 +77,7 @@
             </el-tag>
             <span class="word-limit">
               <el-icon><Document /></el-icon>
-              {{ question.points || 800 }} 字
+              {{ question.points || 0 }} 分
             </span>
           </div>
 

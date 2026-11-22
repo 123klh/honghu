@@ -1,43 +1,32 @@
 <template>
-  <el-container class="layout">
-    <el-aside width="200px" class="aside">
-      <div class="brand">波波公考 <small>管理端</small></div>
-      <el-menu :default-active="$route.path" router>
-        <el-menu-item index="/admin"><el-icon><DataBoard /></el-icon>数据概览</el-menu-item>
-        <el-menu-item index="/admin/questions"><el-icon><Tickets /></el-icon>题库管理</el-menu-item>
-        <el-menu-item index="/admin/community"><el-icon><ChatDotRound /></el-icon>社区管理</el-menu-item>
-      </el-menu>
-    </el-aside>
-    <el-container>
-      <el-header class="header">
-        <span class="muted">管理员：{{ auth.displayName }}（{{ auth.user?.role }}）</span>
-        <el-button link type="primary" @click="logout">退出登录</el-button>
-      </el-header>
-      <el-main><router-view /></el-main>
-    </el-container>
-  </el-container>
+  <AppShell :groups="groups" :display-name="auth.displayName" :role-label="auth.user?.role" manager @command="onCommand">
+    <router-view />
+  </AppShell>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
+import AppShell from '../components/AppShell.vue'
 import { useAuthStore } from '../store/auth'
 import { authApi } from '../api'
 
 const auth = useAuthStore()
 const router = useRouter()
+const groups = [
+  {
+    label: '管理工作台',
+    items: [
+      { to: '/admin', label: '数据概览', icon: 'DataBoard' },
+      { to: '/admin/questions', label: '题库管理', icon: 'Tickets' },
+      { to: '/admin/community', label: '社区管理', icon: 'ChatDotRound' }
+    ]
+  }
+]
 
-async function logout() {
-  try { await authApi.logout() } catch { /* ignore */ }
+async function onCommand(cmd) {
+  if (cmd !== 'logout') return
+  try { await authApi.logout() } catch { /* 令牌失效时仍清除本地登录态。 */ }
   auth.logout()
   router.push({ name: 'login' })
 }
 </script>
-
-<style scoped>
-.layout { min-height: 100vh; }
-.aside { background: #fff; border-right: 1px solid #e4e7ed; }
-.brand { padding: 16px; font-size: 17px; font-weight: 700; color: var(--hh-primary); }
-.brand small { font-size: 11px; color: #909399; font-weight: 400; }
-.header { display: flex; align-items: center; justify-content: flex-end; gap: 12px;
-  background: #fff; border-bottom: 1px solid #e4e7ed; }
-</style>

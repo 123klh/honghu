@@ -61,13 +61,38 @@ export const favoriteApi = {
 }
 
 // ---------- 社区 ----------
+function discussionView(discussion) {
+  return {
+    ...discussion,
+    id: discussion.discussionId ?? discussion.id,
+    authorId: discussion.userId ?? discussion.authorId,
+    pinned: Boolean(discussion.isPinned ?? discussion.pinned),
+    replyCount: discussion.replyCount ?? 0
+  }
+}
+
+function replyView(reply) {
+  return {
+    ...reply,
+    id: reply.replyId ?? reply.id,
+    authorId: reply.userId ?? reply.authorId
+  }
+}
+
 export const communityApi = {
-  list: (params) => http.get('/community/discussions', { params }),
-  adminList: (params) => http.get('/community/discussions', { params }),
-  detail: (id) => http.get(`/community/discussions/${id}`),
-  create: (data) => http.post('/community/discussions', data),
+  list: (params) => http.get('/community/discussions', { params }).then((data) => {
+    const discussions = data.list.map(discussionView)
+    return { ...data, list: discussions, items: discussions }
+  }),
+  adminList: (params) => communityApi.list(params),
+  detail: (id) => http.get(`/community/discussions/${id}`).then((data) => ({
+    ...data,
+    discussion: discussionView(data.discussion),
+    replies: data.replies.map(replyView)
+  })),
+  create: (data) => http.post('/community/discussions', data).then(discussionView),
   remove: (id) => http.delete(`/community/discussions/${id}`),
-  reply: (id, content) => http.post(`/community/discussions/${id}/replies`, { content }),
+  reply: (id, content) => http.post(`/community/discussions/${id}/replies`, { content }).then(replyView),
   like: (replyId) => http.post(`/community/replies/${replyId}/like`),
   accept: (replyId) => http.post(`/community/replies/${replyId}/accept`),
   removeReply: (replyId) => http.delete(`/community/replies/${replyId}`),

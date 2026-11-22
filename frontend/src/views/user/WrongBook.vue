@@ -233,8 +233,15 @@ async function loadWrongQuestions() {
   try {
     loading.value = true
 
-    const data = await practiceApi.wrongList()
-    let questions = data || []
+    const [data, favorites] = await Promise.all([
+      practiceApi.wrongList(),
+      favoriteApi.questions()
+    ])
+    const favoriteIds = new Set(favorites.map(item => item.questionId))
+    let questions = (data || []).map(question => ({
+      ...question,
+      favored: favoriteIds.has(question.questionId)
+    }))
 
     // Apply filters
     if (filterType.value) {
@@ -319,11 +326,11 @@ async function markAsReviewed(questionId) {
 async function handleToggleFavorite(question) {
   try {
     if (question.favored) {
-      await favoriteApi.remove(question.id)
+      await favoriteApi.removeQuestion(question.questionId)
       question.favored = false
       ElMessage.success('已取消收藏')
     } else {
-      await favoriteApi.add(question.id)
+      await favoriteApi.addQuestion(question.questionId)
       question.favored = true
       ElMessage.success('已添加到收藏')
     }

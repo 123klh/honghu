@@ -18,6 +18,10 @@ public class Discussion {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    /** 详情视图的作者名与有效回复数量。 */
+    private String authorName;
+    private Long replyCount;
+
     /** 1=正常 0=已删除 */
     private Integer status;
 }

@@ -1,11 +1,11 @@
 <template>
   <div class="exams-page">
     <div class="page-header">
-      <h2>模拟考试</h2>
-      <p class="subtitle">真实考试环境，全面检验复习成果</p>
+      <h2>{{ activeTab === 'history' ? '考试记录' : '模拟考试' }}</h2>
+      <p class="subtitle">{{ activeTab === 'history' ? '查看考试状态与已交卷成绩' : '真实考试环境，全面检验复习成果' }}</p>
     </div>
 
-    <el-tabs v-model="activeTab" class="exam-tabs">
+    <el-tabs v-model="activeTab" class="exam-tabs" @tab-change="changeTab">
       <el-tab-pane label="可用试卷" name="available">
         <div v-if="loading" class="loading-container">
           <el-icon class="is-loading"><Loading /></el-icon>
@@ -68,45 +68,61 @@
         <div v-else class="history-list">
           <div
             v-for="record in examHistory"
-            :key="record.id"
+            :key="record.examId"
             class="history-card"
           >
             <div class="history-header">
-              <h4>{{ record.examTitle }}</h4>
-              <el-tag :type="getScoreType(record.scorePercentage)">
-                {{ record.score }} 分
+              <h4>{{ recordTitle(record) }}</h4>
+              <el-tag :type="getStatusType(record.status)">
+                {{ statusLabel(record.status) }}
               </el-tag>
             </div>
 
             <div class="history-stats">
               <div class="stat">
-                <span class="label">正确率</span>
-                <span class="value">{{ record.accuracy }}%</span>
+                <span class="label">得分</span>
+                <span class="value">{{ scoreLabel(record) }}</span>
               </div>
               <div class="stat">
                 <span class="label">用时</span>
-                <span class="value">{{ record.duration }} 分钟</span>
+                <span class="value">{{ formatDuration(record.duration) }}</span>
               </div>
               <div class="stat">
-                <span class="label">排名</span>
-                <span class="value">{{ record.rank || '-' }}</span>
+                <span class="label">交卷时间</span>
+                <span class="value date-value">{{ formatDate(record.submitTime) }}</span>
               </div>
             </div>
 
             <div class="history-time">
               <el-icon><Calendar /></el-icon>
-              <span>{{ formatDate(record.startTime) }}</span>
+              <span>开始时间：{{ formatDate(record.startTime) }}</span>
             </div>
 
             <div class="history-actions">
-              <el-button size="small" @click="viewDetail(record)">
-                查看详情
+              <el-button size="small" @click="viewSummary(record)">
+                成绩摘要
               </el-button>
             </div>
           </div>
         </div>
       </el-tab-pane>
     </el-tabs>
+
+    <el-dialog v-model="showSummaryDialog" title="成绩摘要" width="min(520px, calc(100vw - 32px))">
+      <div v-if="selectedRecord" class="record-summary">
+        <h3>{{ recordTitle(selectedRecord) }}</h3>
+        <dl>
+          <div><dt>考试编号</dt><dd>{{ selectedRecord.examId }}</dd></div>
+          <div><dt>考试状态</dt><dd>{{ statusLabel(selectedRecord.status) }}</dd></div>
+          <div><dt>得分</dt><dd>{{ scoreLabel(selectedRecord) }}</dd></div>
+          <div><dt>总分</dt><dd>{{ selectedRecord.totalScore == null ? '—' : selectedRecord.totalScore + ' 分' }}</dd></div>
+          <div><dt>实际用时</dt><dd>{{ formatDuration(selectedRecord.duration) }}</dd></div>
+          <div><dt>开始时间</dt><dd>{{ formatDate(selectedRecord.startTime) }}</dd></div>
+          <div><dt>交卷时间</dt><dd>{{ formatDate(selectedRecord.submitTime) }}</dd></div>
+        </dl>
+      </div>
+      <template #footer><el-button type="primary" @click="showSummaryDialog = false">关闭</el-button></template>
+    </el-dialog>
 
     <!-- Start Exam Confirmation Dialog -->
     <el-dialog
@@ -127,7 +143,7 @@
             <li>考试时长 {{ selectedExam.duration }} 分钟，请合理分配时间</li>
             <li>考试过程中请勿刷新页面或离开，否则视为放弃</li>
             <li>提交后不可修改，请认真作答</li>
-            <li>考试结束后可查看详细解析</li>
+            <li>交卷后可在考试记录中查看成绩摘要</li>
           </ul>
         </el-alert>
 
@@ -161,7 +177,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -175,18 +191,23 @@ import { examApi } from '@/api'
 
 const router = useRouter()
 
-const activeTab = ref('available')
+const props = defineProps({ initialTab: { type: String, default: 'available' } })
+const activeTab = ref(props.initialTab)
 const loading = ref(false)
 const historyLoading = ref(false)
 const availableExams = ref([])
 const examHistory = ref([])
 const showStartDialog = ref(false)
 const selectedExam = ref(null)
+const paperNames = ref({})
+const showSummaryDialog = ref(false)
+const selectedRecord = ref(null)
 
 async function loadAvailableExams() {
   try {
     loading.value = true
     const data = await examApi.list()
+    paperNames.value = Object.fromEntries((data || []).map(paper => [paper.paperId, paper.paperName]))
     // Map backend field names to frontend field names and filter papers with questions
     availableExams.value = (data || [])
       .filter(paper => paper.questionsCount > 0)
@@ -251,8 +272,40 @@ async function confirmStart() {
   }
 }
 
-function viewDetail(record) {
-  router.push({ name: 'exam-history', params: { id: record.id } })
+function changeTab(tab) {
+  router.push({ name: tab === 'history' ? 'exam-history' : 'exams' })
+}
+
+function viewSummary(record) {
+  selectedRecord.value = record
+  showSummaryDialog.value = true
+}
+
+function recordTitle(record) {
+  return paperNames.value[record.paperId] || `试卷 #${record.paperId}`
+}
+
+function statusLabel(status) {
+  return { ONGOING: '未交卷', SUBMITTED: '已交卷' }[status] || status || '—'
+}
+
+function getStatusType(status) {
+  return { ONGOING: 'warning', SUBMITTED: 'success' }[status] || 'info'
+}
+
+function scoreLabel(record) {
+  if (record.status !== 'SUBMITTED') return '未交卷'
+  if (record.score == null) return '未记录'
+  return Number(record.score).toFixed(1).replace(/\.0$/, '') + ' 分'
+}
+
+function formatDuration(seconds) {
+  if (seconds == null) return '—'
+  const total = Number(seconds)
+  if (!Number.isFinite(total) || total < 0) return '—'
+  const minutes = Math.floor(total / 60)
+  const remainder = Math.floor(total % 60)
+  return minutes > 0 ? `${minutes} 分 ${remainder} 秒` : `${remainder} 秒`
 }
 
 function getDifficultyType(difficulty) {
@@ -264,15 +317,10 @@ function getDifficultyType(difficulty) {
   return map[difficulty] || 'info'
 }
 
-function getScoreType(percentage) {
-  if (percentage >= 90) return 'success'
-  if (percentage >= 60) return 'warning'
-  return 'danger'
-}
-
 function formatDate(dateStr) {
-  if (!dateStr) return ''
+  if (!dateStr) return '—'
   const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return '—'
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
@@ -281,6 +329,13 @@ function formatDate(dateStr) {
     minute: '2-digit'
   })
 }
+
+watch(() => props.initialTab, (tab) => {
+  activeTab.value = tab
+  showSummaryDialog.value = false
+  showStartDialog.value = false
+  if (tab === 'history') loadExamHistory()
+})
 
 onMounted(() => {
   loadAvailableExams()
@@ -428,12 +483,15 @@ onMounted(() => {
   margin: 0;
   font-size: 16px;
   color: var(--el-text-color-primary);
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .history-stats {
   display: flex;
   gap: 40px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .stat {
@@ -452,6 +510,13 @@ onMounted(() => {
   font-weight: 600;
   color: var(--el-text-color-primary);
 }
+
+.stat .date-value { font-size: 14px; line-height: 25px; }
+.record-summary h3 { margin: 0 0 20px; font-size: 18px; line-height: 1.6; overflow-wrap: anywhere; }
+.record-summary dl { margin: 0; }
+.record-summary dl > div { display: grid; grid-template-columns: 86px 1fr; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--el-border-color-light); }
+.record-summary dt { color: var(--el-text-color-secondary); }
+.record-summary dd { margin: 0; color: var(--el-text-color-primary); overflow-wrap: anywhere; }
 
 .history-time {
   display: flex;

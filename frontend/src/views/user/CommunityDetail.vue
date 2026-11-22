@@ -1,5 +1,6 @@
 <template>
   <div class="community-detail">
+    <router-link to="/community" class="back-link"><el-icon><ArrowLeft /></el-icon>返回社区</router-link>
     <div v-if="loading" class="loading-container">
       <el-icon class="is-loading"><Loading /></el-icon>
       <p>加载讨论详情中...</p>
@@ -33,12 +34,8 @@
           </div>
           <div class="stats">
             <span class="stat-item">
-              <el-icon><View /></el-icon>
-              {{ discussion.viewCount }}
-            </span>
-            <span class="stat-item">
               <el-icon><ChatDotRound /></el-icon>
-              {{ discussion.replyCount }}
+              {{ discussion.replyCount }} 条回复
             </span>
           </div>
         </div>
@@ -84,6 +81,7 @@
                 size="small"
                 text
                 type="danger"
+                aria-label="删除这条回复"
                 @click="deleteReply(reply.id)"
               >
                 <el-icon><Delete /></el-icon>
@@ -105,6 +103,7 @@
           type="textarea"
           :rows="4"
           placeholder="写下你的想法..."
+          aria-label="回复内容"
           maxlength="1000"
           show-word-limit
         />
@@ -129,8 +128,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Loading,
+  ArrowLeft,
   Star,
-  View,
   ChatDotRound,
   Delete
 } from '@element-plus/icons-vue'
@@ -218,7 +217,7 @@ async function deleteDiscussion() {
       }
     )
 
-    await communityApi.delete(discussion.value.id)
+    await communityApi.remove(discussion.value.id)
     ElMessage.success('删除成功')
     router.push('/community')
 
@@ -241,7 +240,7 @@ async function deleteReply(replyId) {
       }
     )
 
-    await communityApi.deleteReply(replyId)
+    await communityApi.removeReply(replyId)
     ElMessage.success('删除成功')
     await loadDiscussion()
 
@@ -282,215 +281,45 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.community-detail {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.loading-container,
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: 16px;
-}
-
-.loading-container .el-icon {
-  font-size: 48px;
-  color: var(--el-color-primary);
-}
-
-.detail-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.discussion-card,
-.replies-section,
-.reply-form-section {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.card-header h1 {
-  margin: 0;
-  font-size: 24px;
-  color: var(--el-text-color-primary);
-  line-height: 1.4;
-  flex: 1;
-}
-
-.author-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--el-border-color);
-}
-
-.author-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.author-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.author-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.post-time,
-.reply-time {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-}
-
-.stats {
-  display: flex;
-  gap: 16px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-}
-
-.discussion-content {
-  font-size: 16px;
-  line-height: 1.8;
-  color: var(--el-text-color-primary);
-  white-space: pre-wrap;
-  margin-bottom: 16px;
-}
-
-.discussion-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 12px;
-  border-top: 1px solid var(--el-border-color);
-}
-
-.section-header {
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--el-border-color);
-}
-
-.section-header h3 {
-  margin: 0;
-  font-size: 18px;
-  color: var(--el-text-color-primary);
-}
-
-.no-replies {
-  padding: 40px 0;
-  text-align: center;
-}
-
-.replies-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.reply-item {
-  padding: 16px;
-  background: var(--el-fill-color-light);
-  border-radius: 8px;
-  border-left: 3px solid var(--el-color-primary);
-}
-
-.reply-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.reply-author {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.reply-content {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--el-text-color-primary);
-  white-space: pre-wrap;
-}
-
-.reply-form-section h4 {
-  margin: 0 0 16px 0;
-  font-size: 16px;
-  color: var(--el-text-color-primary);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-
+.community-detail { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0; }
+.back-link { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 20px; color: #758198; font-size: 13px; text-decoration: none; }
+.back-link:hover { color: #646cff; }
+.back-link:focus-visible { outline: 2px solid #b7bcff; outline-offset: 5px; border-radius: 3px; }
+.loading-container, .error-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; gap: 16px; color: #8491a5; }
+.loading-container .el-icon { font-size: 40px; color: #646cff; }
+.detail-content { display: flex; flex-direction: column; gap: 20px; }
+.discussion-card, .replies-section, .reply-form-section { background: #fff; border: 1px solid #edf0f6; border-radius: 12px; padding: 28px; box-shadow: 0 3px 14px rgb(39 48 68 / 3%); }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; }
+.card-header h1 { min-width: 0; margin: 0; font-size: 24px; font-weight: 650; color: #273044; line-height: 1.6; flex: 1; overflow-wrap: anywhere; }
+.author-info { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 22px; border-bottom: 1px solid #edf0f6; }
+.author-left, .reply-author { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.author-details { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.author-name { font-size: 14px; font-weight: 600; color: #465168; overflow-wrap: anywhere; }
+.post-time, .reply-time { font-size: 12px; color: #8491a5; }
+.community-detail :deep(.el-avatar) { flex-shrink: 0; background: #eeefff; color: #646cff; font-weight: 600; }
+.stats { display: flex; gap: 16px; flex-shrink: 0; }
+.stat-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8491a5; }
+.discussion-content { margin-bottom: 22px; font-size: 16px; line-height: 1.95; color: #465168; white-space: pre-wrap; overflow-wrap: anywhere; }
+.discussion-actions { display: flex; justify-content: flex-end; padding-top: 14px; border-top: 1px solid #edf0f6; }
+.section-header { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid #edf0f6; }
+.section-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: #273044; }
+.no-replies { padding: 12px 0; text-align: center; }
+.replies-list { display: flex; flex-direction: column; gap: 0; }
+.reply-item { padding: 20px 0; }
+.reply-item:first-child { padding-top: 0; }
+.reply-item:last-child { padding-bottom: 0; }
+.reply-item + .reply-item { border-top: 1px solid #edf0f6; }
+.reply-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 14px; }
+.reply-content { padding-left: 44px; font-size: 15px; line-height: 1.9; color: #465168; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reply-form-section h4 { margin: 0 0 20px; font-size: 16px; font-weight: 600; color: #273044; }
+.form-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
 @media (max-width: 768px) {
-  .community-detail {
-    padding: 12px;
-  }
-
-  .discussion-card,
-  .replies-section,
-  .reply-form-section {
-    padding: 16px;
-  }
-
-  .card-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .card-header h1 {
-    font-size: 20px;
-  }
-
-  .author-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .discussion-content {
-    font-size: 15px;
-  }
-
-  .reply-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
+  .discussion-card, .replies-section, .reply-form-section { padding: 20px 18px; }
+  .card-header { gap: 12px; }
+  .card-header h1 { font-size: 20px; }
+  .author-info { align-items: flex-start; flex-wrap: wrap; }
+  .discussion-content { font-size: 15px; }
+  .reply-content { padding-left: 0; font-size: 14px; }
+  .stat-item { font-size: 11px; }
 }
 </style>

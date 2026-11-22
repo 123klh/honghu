@@ -1,258 +1,181 @@
 # 波波公考 - 快速启动指南
 
+本文说明如何从仓库根目录启动项目。
+
 ## 系统要求
 
-- **JDK**: 21
-- **Node.js**: 18+
-- **MySQL**: 8.0+
-- **Maven**: 3.6+
+- Windows 10/11，使用 PowerShell 终端。
+- JDK 21，`JAVA_HOME` 指向 JDK 安装目录，`java.exe` 可从 PATH 调用。
+- Node.js 18+ 与 npm。
+- MySQL 8，默认连接端口为 `3306`。Windows 服务名可按本机安装调整。
+- 后端使用项目自带的 Maven Wrapper，在 `backend` 目录执行 `.\mvnw.cmd`。
 
-## 启动步骤
+可在 PowerShell 中检查环境。
 
-### 1. 数据库初始化
-
-```bash
-# 登录MySQL
-mysql -u root -p
-
-# 创建数据库
-CREATE DATABASE honghu CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-# 退出
-exit;
+```powershell
+java -version
+node --version
+npm.cmd --version
+$env:JAVA_HOME
 ```
 
-### 2. 配置数据库连接
+## 一键启动
 
-编辑 `backend/src/main/resources/application.properties`：
+在 PowerShell 中运行以下命令。若要从资源管理器双击启动脚本，请先将环境变量配置为 Windows 用户或系统环境变量。
 
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/honghu?useSSL=false&serverTimezone=Asia/Shanghai
-spring.datasource.username=root
-spring.datasource.password=你的密码
+启动前在同一个 PowerShell 会话中设置数据库密码和 JWT 签名密钥。以下方式会将数据库密码以隐藏输入读取，随机生成 32 字节密钥。关闭该会话后需要重新设置，使用会话变量时应在当前 PowerShell 中启动服务。
+
+```powershell
+$securePassword = Read-Host 'MySQL password' -AsSecureString
+$env:HONGHU_DB_PASSWORD = [System.Net.NetworkCredential]::new('', $securePassword).Password
+$env:HONGHU_JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 ```
 
-### 3. 启动后端
-
-```bash
-cd backend
-
-# 方式1：使用Maven运行（开发模式）
-mvn spring-boot:run
-
-# 方式2：使用JAR包运行（生产模式）
-mvn clean package -DskipTests
-java -jar target/honghu-backend-1.0.1.jar
+```powershell
+.\一键启动.bat
 ```
 
-后端启动成功后访问：http://localhost:8080
+脚本通过 `start.ps1` 检查已有服务，并尝试启动已安装且处于停止状态的 MySQL 服务。后端需要启动时先构建 JAR，前端需要启动时检查并安装缺少的 Vite 依赖，随后等待前后端就绪。数据库启动需要管理员权限时，Windows 会显示权限确认，点击“是”继续。
 
-API文档：http://localhost:8080/swagger-ui.html
+已有服务正常时直接复用。启动期间再次运行会提示正在启动；其他服务占用 `8080` 或 `7001` 时会报告端口错误。前后端在后台运行，启动窗口显示访问地址后可按 Enter 关闭。
 
-### 4. 启动前端
+## 访问地址
 
-```bash
-cd frontend
+| 用途 | 地址 |
+| --- | --- |
+| 登录及考生端 | [http://localhost:7001/](http://localhost:7001/) |
+| 管理端 | [http://localhost:7001/admin](http://localhost:7001/admin) |
+| 后端健康检查 | [http://localhost:8080/api/health](http://localhost:8080/api/health) |
+| Swagger 接口文档 | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) |
+| OpenAPI JSON | [http://localhost:8080/api-docs](http://localhost:8080/api-docs) |
 
-# 安装依赖（首次运行）
-npm install
+MySQL 默认使用 `localhost:3306`，数据库名称为 `honghu`。Vite 将 `/api` 请求代理到 `http://localhost:8080`。如使用其他端口，请同步设置 `HONGHU_DB_URL`。
 
-# 开发模式启动
-npm run dev
+## 登录账号
 
-# 生产构建
-npm run build
+管理员用户名默认为 `admin`。首次启动时，`AdminInitializer` 会随机生成初始密码并在后端日志中提示，同时写入被 `.gitignore` 排除的 `ADMIN_CREDENTIALS.txt`。首次登录后请立即修改密码并删除该文件。不要将凭据提交到版本库。
+
+普通考生可从登录页面的“立即注册”创建账号。注册用户名长度为 3–50 个字符，注册密码长度为 6–50 个字符。
+
+管理员已存在时，启动流程使用数据库中的现有账号。同一账号重新登录会注销该账号之前的登录令牌。
+
+## 界面与导航
+
+登录和注册页面采用蓝紫主题。考生登录后进入学习首页，查看真实学习统计、答题图表、学习入口和最近社区讨论。桌面端通过左侧导航切换页面；手机端使用底部常用入口，或打开顶栏菜单抽屉访问申论、错题、收藏和考试记录等页面。管理端沿用同一视觉风格。
+
+考试记录页区分未交卷和已交卷状态，点击“成绩摘要”查看得分、总分、实际用时和开始及交卷时间。
+
+首次打开改版界面时按 Ctrl+F5 刷新，加载新的页面和样式。视觉参考见 [蓝紫学习工作台改版说明](docs/design/soybean-redesign.md)。
+
+## 在 VS Code 中运行
+
+在 VS Code 中打开仓库文件夹。手动启动前先执行停止脚本，释放前后端端口。
+
+```powershell
+.\停止服务.bat
 ```
 
-前端启动成功后访问：http://localhost:5173
+确认 MySQL80 运行。服务处于停止状态时，可在管理员 PowerShell 中执行以下命令。
 
-## 默认账号
+```powershell
+Start-Service -Name MySQL80
+```
 
-### 管理员账号
-- 用户名：`admin`
-- 密码：`admin123`
+打开两个 PowerShell 终端。后端终端执行以下命令。
 
-### 测试用户账号
-- 用户名：`test`
-- 密码：`test123`
+```powershell
+Set-Location .\backend
+.\mvnw.cmd spring-boot:run
+```
 
-*注意：首次启动时，后端会自动创建这些默认账号（InitRunner.java）*
+前端终端执行以下命令。
+
+```powershell
+Set-Location .\frontend
+npm.cmd install
+npm.cmd run dev
+```
+
+前端依赖已安装时，直接运行 `npm.cmd run dev`。前端源码和样式修改后，Vite 会更新页面；本次界面改版继续使用原有一键启动脚本和端口配置。修改 Java 代码后重启后端。默认使用 Caffeine 保存有效令牌，后端重启后需要重新登录，再刷新浏览器页面。
+
+## 停止与日志
+
+停止一键启动的前后端服务时，双击 `停止服务.bat`。在 VS Code 手动运行时，也可在相应终端按 Ctrl+C。
+
+运行日志位于 `logs` 目录。
+
+- `backend.log` 和 `backend-error.log` 记录后端运行输出。
+- `frontend.log` 和 `frontend-error.log` 记录前端运行输出。
+- Maven 构建和首次 npm 安装的输出显示在启动终端。
+
+MySQL 由操作系统服务管理。数据库连接配置位于 `backend/src/main/resources/application.properties`，密码和 JWT 密钥通过环境变量提供。
+
+## 新数据库环境的准备
+
+在新的 MySQL 环境中先创建数据库，再设置连接环境变量。
+
+```powershell
+mysql.exe -P 3306 -u root -p
+```
+
+进入 MySQL 客户端后执行以下 SQL。
+
+```sql
+CREATE DATABASE IF NOT EXISTS honghu
+CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+连接属性使用 `HONGHU_DB_URL`、`HONGHU_DB_USER` 和 `HONGHU_DB_PASSWORD`。JWT 密钥使用 `HONGHU_JWT_SECRET`，长度至少 32 字节。
+
+后端启动时由 Flyway 执行 `backend/src/main/resources/db/migration` 下的数据库迁移。题库素材导入流程见 [README.md](README.md) 的数据导入部分。
 
 ## 常见问题
 
-### 1. 后端启动失败
+### npm 提示找不到 package.json
 
-**问题**：找不到主类 `com.honghu.HonghuApplication`
+前端命令在 `frontend` 目录执行。
 
-**解决**：
-```bash
-cd backend
-mvn clean compile
-mvn spring-boot:run
+```powershell
+Set-Location .\frontend
+npm.cmd run dev
 ```
 
-**问题**：数据库连接失败
+### 端口占用或权限拒绝
 
-**解决**：
-- 确认MySQL服务已启动
-- 检查数据库名称、用户名、密码配置
-- 确认防火墙允许3306端口
+检查实际监听进程及 Windows 保留端口范围。
 
-### 2. 前端启动失败
-
-**问题**：依赖安装失败
-
-**解决**：
-```bash
-# 清除缓存重新安装
-rm -rf node_modules package-lock.json
-npm install
+```powershell
+Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 7001, 8080, 3306 }
+netsh interface ipv4 show excludedportrange protocol=tcp
+netsh interface ipv6 show excludedportrange protocol=tcp
 ```
 
-**问题**：API请求失败（跨域/404）
+前端默认使用 `7001`，后端默认使用 `8080`。前端端口配置在 `frontend/vite.config.js`，数据库连接由 `HONGHU_DB_URL` 配置。
 
-**解决**：
-- 确认后端已启动在 http://localhost:8080
-- 检查 `vite.config.js` 中的代理配置
+### 前端请求返回 500 或连接被拒绝
 
-### 3. 数据库表未创建
+检查 `http://localhost:8080/api/health` 和后端日志。后端停止时，Vite 代理请求会失败，可重新执行一键启动恢复服务。
 
-**问题**：表不存在错误
+### 管理员登录失败
 
-**解决**：
-后端使用Flyway自动创建表结构，首次启动时会自动执行 `db/migration` 目录下的SQL脚本。
+选择“管理员登录”，使用首次启动生成的管理员密码。密码修改或同一账号再次登录后，需要重新登录获取有效令牌。
 
-如果自动创建失败，手动执行：
-```bash
-mysql -u root -p honghu < backend/src/main/resources/db/migration/V1__init.sql
+### 更新后学习统计或社区内容没有显示
+
+后端代码更新后，先重新构建并启动后端，再重新登录和刷新页面。一键启动会复用已运行的服务，因此需要先停止服务，再启动才能加载新的后端代码。
+
+学习统计图表会在页面容器就绪后绘制；无答题记录时显示“暂无答题数据”。页面统计包括累计作答、正确率、答错次数与已提交考试数。社区列表和详情按后端记录读取，发帖或回复成功后刷新内容。当前功能与尚未支持的管理操作见 [README.md](README.md)。
+
+图表会随容器大小自动调整；科目正确率在一至两个科目时使用条形图，三个及以上科目时使用雷达图。仅前端样式或页面更新时，先按 Ctrl+F5 刷新，不需要为此改动数据库或启动配置。
+
+### 后端构建失败
+
+检查 JDK 21、`JAVA_HOME` 和启动终端的 Maven 输出。
+
+```powershell
+Set-Location .\backend
+.\mvnw.cmd -version
+.\mvnw.cmd package -DskipTests
 ```
 
-## 功能验证
-
-### 1. 用户端功能
-
-1. **注册/登录**
-   - 访问 http://localhost:5173
-   - 点击"注册"创建新账号或使用测试账号登录
-
-2. **刷题练习**
-   - 进入"刷题"页面
-   - 选择题型和数量开始练习
-   - 查看答题结果和解析
-
-3. **模拟考试**
-   - 进入"考试"页面
-   - 选择试卷开始考试
-   - 查看考试历史和成绩
-
-4. **申论练习**
-   - 进入"申论"页面
-   - 选择题目作答
-   - 查看AI评分结果
-
-5. **错题本**
-   - 自动收集错题
-   - 标记复习状态
-
-6. **数据统计**
-   - 查看答题趋势
-   - 题型正确率分布
-   - 学习时长统计
-
-### 2. 管理端功能
-
-1. **登录管理后台**
-   - 使用管理员账号登录
-   - 自动跳转到 `/admin`
-
-2. **数据概览**
-   - 查看用户统计
-   - 题库统计
-   - 活跃度分析
-
-3. **题库管理**
-   - 添加/编辑/删除题目
-   - 查看题目统计
-
-4. **社区管理**
-   - 置顶/删除讨论
-   - 管理回复
-
-## 数据导入
-
-题库数据已通过导入工具从PDF中提取：
-
-- **客观题**：7189道（已导入）
-- **申论题**：100+道（已导入）
-
-如需重新导入或更新题库，使用 `tools/importer` 工具。
-
-## 生产部署
-
-### Docker部署（推荐）
-
-```bash
-# 构建镜像
-docker build -t honghu-backend ./backend
-docker build -t honghu-frontend ./frontend
-
-# 启动服务
-docker-compose up -d
-```
-
-### 传统部署
-
-**后端部署**：
-```bash
-# 打包
-cd backend
-mvn clean package -DskipTests
-
-# 运行（使用nohup后台运行）
-nohup java -jar target/honghu-backend-1.0.1.jar > app.log 2>&1 &
-```
-
-**前端部署（Nginx）**：
-```bash
-# 构建
-cd frontend
-npm run build
-
-# 将 dist/ 目录内容部署到Nginx
-cp -r dist/* /usr/share/nginx/html/
-
-# 配置Nginx反向代理
-# /etc/nginx/nginx.conf
-location /api {
-    proxy_pass http://localhost:8080;
-}
-```
-
-## 性能优化建议
-
-1. **数据库优化**
-   - 添加合适的索引
-   - 定期分析和优化查询
-   - 考虑使用Redis缓存热点数据
-
-2. **前端优化**
-   - 启用gzip压缩
-   - CDN加速静态资源
-   - 图片懒加载
-
-3. **服务器配置**
-   - 调整JVM堆内存：`java -Xms512m -Xmx2048m -jar app.jar`
-   - 配置连接池大小
-   - 启用HTTP/2
-
-## 技术支持
-
-- 题库数据来源：真实公考试题
-- 后端框架：Spring Boot 3.3.3
-- 前端框架：Vue 3.5.12
-- UI组件：Element Plus 2.8.4
-- 数据可视化：ECharts 5.5.1
-
----
-
-**祝您使用愉快！** 🎉
+更详细的启停和日志说明见 [启动说明.md](启动说明.md)。当前功能与页面接口对齐事项见 [README.md](README.md)。

@@ -1,19 +1,17 @@
 <template>
-  <div class="wrap">
-    <el-card class="card">
-      <h1 class="title">注册账号</h1>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="0">
-        <el-form-item prop="userName">
-          <el-input v-model="form.userName" placeholder="用户名（3-50 字符）" size="large" />
+  <AuthLayout title="注册账号" description="创建考生账号，开始你的备考学习。">
+      <el-form :model="form" :rules="rules" ref="formRef" label-position="top">
+        <el-form-item prop="userName" label="用户名">
+          <el-input v-model="form.userName" placeholder="3–50 个字符" size="large" autocomplete="username" />
         </el-form-item>
-        <el-form-item prop="password">
-          <el-input v-model="form.password" type="password" placeholder="密码（至少 6 位）"
-                    size="large" show-password />
+        <el-form-item prop="password" label="密码">
+          <el-input v-model="form.password" type="password" placeholder="至少 6 个字符"
+                    size="large" autocomplete="new-password" show-password />
         </el-form-item>
-        <el-form-item prop="email">
-          <el-input v-model="form.email" placeholder="邮箱（选填）" size="large" />
+        <el-form-item prop="email" label="邮箱（选填）">
+          <el-input v-model="form.email" placeholder="请输入邮箱" size="large" autocomplete="email" />
         </el-form-item>
-        <el-form-item>
+        <el-form-item label="性别（选填）">
           <el-radio-group v-model="form.gender">
             <el-radio label="男">男</el-radio>
             <el-radio label="女">女</el-radio>
@@ -24,8 +22,7 @@
         </el-button>
       </el-form>
       <div class="foot">已有账号？<router-link to="/login">去登录</router-link></div>
-    </el-card>
-  </div>
+  </AuthLayout>
 </template>
 
 <script setup>
@@ -33,6 +30,7 @@ import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { authApi } from '../api'
+import AuthLayout from '../components/AuthLayout.vue'
 
 const formRef = ref()
 const form = reactive({ userName: '', password: '', email: '', gender: '' })
@@ -68,10 +66,9 @@ async function submit() {
 </script>
 
 <style scoped>
-.wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #1f5fbf 0%, #4b8be0 100%); padding: 16px; }
-.card { width: 100%; max-width: 380px; }
-.title { margin: 0 0 16px; font-size: 22px; text-align: center; color: var(--hh-primary); }
-.btn { width: 100%; }
-.foot { text-align: center; margin-top: 14px; font-size: 13px; color: #909399; }
+.btn { width: 100%; height: 46px; border-radius: 9px; font-weight: 600; }
+.foot { margin-top: 22px; color: #738097; font-size: 13px; text-align: center; }
+.foot a { margin-left: 6px; color: var(--hh-primary, #646cff); font-weight: 600; text-decoration: none; }
+.foot a:hover { text-decoration: underline; }
+.foot a:focus-visible { outline: 2px solid var(--hh-primary, #646cff); outline-offset: 4px; }
 </style>

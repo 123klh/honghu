@@ -324,9 +324,12 @@ def main(argv=None) -> int:
     parser.add_argument('--host', default=os.getenv('HONGHU_DB_HOST', '127.0.0.1'))
     parser.add_argument('--port', type=int, default=int(os.getenv('HONGHU_DB_PORT', '3306')))
     parser.add_argument('--user', default=os.getenv('HONGHU_DB_USER', 'root'))
-    parser.add_argument('--password', default=os.getenv('HONGHU_DB_PASSWORD', '1234'))
+    parser.add_argument('--password', default=os.getenv('HONGHU_DB_PASSWORD'))
     parser.add_argument('--database', default=os.getenv('HONGHU_DB_NAME', 'honghu'))
     args = parser.parse_args(argv)
+
+    if not args.password:
+        parser.error('Set HONGHU_DB_PASSWORD or pass --password')
 
     if not os.path.isfile(args.input):
         raise SystemExit('normalized input missing; run normalize.py first')

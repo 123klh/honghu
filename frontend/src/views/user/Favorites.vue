@@ -9,6 +9,11 @@
       <el-icon class="is-loading"><Loading /></el-icon>
     </div>
 
+    <div v-else-if="error" class="error-state">
+      <el-alert :title="error" type="error" :closable="false" show-icon />
+      <el-button @click="loadFavorites">重新加载</el-button>
+    </div>
+
     <div v-else class="content">
       <!-- Filter Bar -->
       <div class="toolbar">
@@ -17,7 +22,7 @@
           placeholder="题目类型"
           clearable
           style="width: 200px"
-          @change="loadFavorites"
+          @change="changeFilter"
         >
           <el-option label="全部类型" value="" />
           <el-option label="常识判断" value="常识判断" />
@@ -28,14 +33,14 @@
         </el-select>
 
         <div class="stats">
-          <span>共收藏 {{ total }} 题</span>
+          <span>共收藏 {{ allFavorites.length }} 题</span>
         </div>
       </div>
 
       <!-- Favorites List -->
       <div v-if="favorites.length === 0" class="empty-state">
-        <el-empty description="还没有收藏题目">
-          <el-button type="primary" @click="$router.push('/practice')">
+        <el-empty :description="allFavorites.length ? '没有符合该类型的收藏题目' : '还没有收藏题目'">
+          <el-button v-if="!allFavorites.length" type="primary" @click="$router.push('/practice')">
             去练习
           </el-button>
         </el-empty>
@@ -50,10 +55,11 @@
           <div class="question-header">
             <div class="header-left">
               <span class="question-number"># {{ (currentPage - 1) * pageSize + idx + 1 }}</span>
-              <el-tag size="small">{{ item.question.questionType }}</el-tag>
+              <el-tag v-if="item.question" size="small">{{ item.question.questionType }}</el-tag>
+              <el-tag v-else size="small" type="info">暂时不可用</el-tag>
             </div>
             <div class="header-right">
-              <span class="favorite-time">{{ formatDate(item.createdAt) }}</span>
+              <span class="favorite-time">收藏于 {{ formatDate(item.createdAt) }}</span>
               <el-button
                 text
                 type="danger"
@@ -66,11 +72,14 @@
           </div>
 
           <QuestionCard
+            v-if="item.question"
             :question="item.question"
-            :index="idx"
+            :index="(currentPage - 1) * pageSize + idx"
             model-value=""
+            :disabled="true"
             :show-favorite="false"
           />
+          <el-alert v-else title="题目已下架或暂时无法加载" type="info" :closable="false" show-icon />
 
           <div v-if="item.note" class="note-section">
             <div class="note-header">
@@ -98,8 +107,9 @@
           v-model:current-page="currentPage"
           :page-size="pageSize"
           :total="total"
-          layout="prev, pager, next, total"
-          @current-change="loadFavorites"
+          :pager-count="5"
+          layout="prev, pager, next"
+          background
         />
       </div>
     </div>
@@ -108,14 +118,15 @@
     <el-dialog
       v-model="showNoteDialog"
       title="编辑笔记"
-      width="600px"
+      width="min(600px, calc(100vw - 32px))"
     >
       <el-input
         v-model="editingNote"
         type="textarea"
         :rows="6"
         placeholder="记录你对这道题的理解、易错点、解题技巧等..."
-        maxlength="500"
+        maxlength="200"
+        aria-label="收藏题目笔记"
         show-word-limit
       />
 
@@ -130,52 +141,56 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Loading,
-  StarFilled,
-  Document,
-  Edit
-} from '@element-plus/icons-vue'
+import { Loading, StarFilled, Document, Edit } from '@element-plus/icons-vue'
 import QuestionCard from '@/components/QuestionCard.vue'
-import { favoriteApi } from '@/api'
-
-const router = useRouter()
+import { favoriteApi, questionApi } from '@/api'
 
 const loading = ref(false)
-const favorites = ref([])
+const error = ref('')
+const allFavorites = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
-const total = ref(0)
 const filterType = ref('')
+
+const filteredFavorites = computed(() => allFavorites.value.filter(item =>
+  !filterType.value || item.question?.questionType === filterType.value
+))
+const total = computed(() => filteredFavorites.value.length)
+const favorites = computed(() => filteredFavorites.value.slice(
+  (currentPage.value - 1) * pageSize.value,
+  currentPage.value * pageSize.value
+))
 
 const showNoteDialog = ref(false)
 const editingItem = ref(null)
 const editingNote = ref('')
 const saving = ref(false)
 
+function changeFilter() {
+  currentPage.value = 1
+}
+
+function clampPage() {
+  currentPage.value = Math.min(currentPage.value, Math.max(1, Math.ceil(total.value / pageSize.value)))
+}
+
 async function loadFavorites() {
+  loading.value = true
+  error.value = ''
   try {
-    loading.value = true
-
-    const params = {
-      page: currentPage.value,
-      size: pageSize.value
-    }
-
-    if (filterType.value) {
-      params.questionType = filterType.value
-    }
-
-    const data = await favoriteApi.list(params)
-    favorites.value = data.items || []
-    total.value = data.total || 0
-
+    const records = await favoriteApi.questions()
+    const questions = await Promise.allSettled(records.map(record => questionApi.get(record.questionId)))
+    allFavorites.value = records.map((record, index) => ({
+      ...record,
+      note: record.notes || '',
+      question: questions[index].status === 'fulfilled' ? questions[index].value : null
+    }))
+    clampPage()
   } catch (err) {
     console.error('Failed to load favorites:', err)
-    ElMessage.error('加载失败')
+    error.value = '收藏暂时无法加载，请重试。'
   } finally {
     loading.value = false
   }
@@ -183,22 +198,17 @@ async function loadFavorites() {
 
 async function removeFavorite(questionId) {
   try {
-    await ElMessageBox.confirm(
-      '确定要取消收藏这道题吗？',
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-
-    await favoriteApi.remove(questionId)
+    await ElMessageBox.confirm('确定要取消收藏这道题吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await favoriteApi.removeQuestion(questionId)
+    allFavorites.value = allFavorites.value.filter(item => item.questionId !== questionId)
+    clampPage()
     ElMessage.success('已取消收藏')
-    loadFavorites()
-
   } catch (err) {
-    if (err === 'cancel') return
+    if (err === 'cancel' || err === 'close') return
     console.error('Failed to remove favorite:', err)
     ElMessage.error('操作失败')
   }
@@ -212,19 +222,16 @@ function editNote(item) {
 
 async function saveNote() {
   if (!editingItem.value) return
-
+  saving.value = true
   try {
-    saving.value = true
-
-    await favoriteApi.updateNote(
-      editingItem.value.questionId,
-      editingNote.value
-    )
-
+    await favoriteApi.addQuestion(editingItem.value.questionId, {
+      folder: editingItem.value.folder,
+      notes: editingNote.value
+    })
+    editingItem.value.notes = editingNote.value
     editingItem.value.note = editingNote.value
     ElMessage.success('笔记已保存')
     showNoteDialog.value = false
-
   } catch (err) {
     console.error('Failed to save note:', err)
     ElMessage.error('保存失败')
@@ -235,197 +242,46 @@ async function saveNote() {
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
+  return new Date(dateStr).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
 
-onMounted(() => {
-  loadFavorites()
-})
+onMounted(loadFavorites)
 </script>
 
 <style scoped>
-.favorites-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 30px;
-}
-
-.page-header h2 {
-  font-size: 28px;
-  margin: 0 0 8px 0;
-  color: var(--el-text-color-primary);
-}
-
-.subtitle {
-  color: var(--el-text-color-secondary);
-  margin: 0;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-}
-
-.loading-container .el-icon {
-  font-size: 48px;
-  color: var(--el-color-primary);
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  gap: 16px;
-}
-
-.stats {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  font-weight: 500;
-}
-
-.empty-state {
-  min-height: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border-radius: 8px;
-}
-
-.questions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.question-item {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.question-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--el-border-color);
-}
-
-.header-left,
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.question-number {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--el-color-primary);
-}
-
-.favorite-time {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-}
-
-.note-section {
-  margin-top: 16px;
-  padding: 16px;
-  background: var(--el-fill-color-light);
-  border-radius: 8px;
-  border-left: 4px solid var(--el-color-warning);
-}
-
-.note-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--el-color-warning);
-}
-
-.note-content {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--el-text-color-primary);
-  white-space: pre-wrap;
-}
-
-.question-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--el-border-color);
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-}
-
+.favorites-page { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0; }
+.page-header { margin-bottom: 24px; }
+.page-header h2 { margin: 0 0 8px; font-size: 24px; font-weight: 650; color: #273044; }
+.subtitle { margin: 0; font-size: 14px; color: #8491a5; line-height: 1.7; }
+.loading-container { display: flex; justify-content: center; align-items: center; min-height: 320px; }
+.loading-container .el-icon { font-size: 40px; color: #646cff; }
+.error-state { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+.content, .questions-list { display: flex; flex-direction: column; gap: 20px; }
+.toolbar, .question-item, .empty-state, .pagination { background: #fff; border: 1px solid #edf0f6; border-radius: 12px; box-shadow: 0 3px 14px rgb(39 48 68 / 3%); }
+.toolbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; gap: 16px; }
+.stats { font-size: 13px; color: #8491a5; }
+.empty-state { min-height: 300px; display: flex; align-items: center; justify-content: center; }
+.question-item { padding: 24px; }
+.question-header { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid #edf0f6; }
+.header-left, .header-right { display: flex; align-items: center; gap: 12px; }
+.question-number { font-size: 14px; font-weight: 600; color: #646cff; }
+.favorite-time { font-size: 12px; color: #8491a5; }
+.question-item :deep(.question-card) { border: 0; border-radius: 0; padding: 0; box-shadow: none; }
+.question-item :deep(.question-card > .question-header) { display: none; }
+.note-section { margin-top: 22px; padding: 18px; background: #f5f5ff; border-radius: 9px; border-left: 3px solid #646cff; }
+.note-header { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; font-size: 13px; font-weight: 600; color: #646cff; }
+.note-content { font-size: 14px; line-height: 1.9; color: #465168; white-space: pre-wrap; overflow-wrap: anywhere; }
+.question-footer { display: flex; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid #edf0f6; }
+.question-footer :deep(.el-icon) { margin-right: 5px; }
+.pagination { display: flex; justify-content: center; padding: 20px; }
 @media (max-width: 768px) {
-  .favorites-page {
-    padding: 12px;
-  }
-
-  .page-header h2 {
-    font-size: 24px;
-  }
-
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .toolbar > * {
-    width: 100% !important;
-  }
-
-  .stats {
-    text-align: center;
-  }
-
-  .question-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .header-right {
-    width: 100%;
-    justify-content: space-between;
-  }
+  .page-header h2 { font-size: 22px; }
+  .toolbar { flex-direction: column; align-items: stretch; padding: 18px; }
+  .toolbar :deep(.el-select) { width: 100% !important; }
+  .stats { font-size: 12px; }
+  .question-item { padding: 20px 18px; }
+  .question-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .header-right { width: 100%; justify-content: space-between; gap: 8px; }
+  .favorite-time { font-size: 11px; }
 }
 </style>

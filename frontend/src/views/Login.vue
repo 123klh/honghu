@@ -1,21 +1,18 @@
 <template>
-  <div class="wrap">
-    <el-card class="card">
-      <h1 class="title">波波公考</h1>
-      <p class="muted sub">公考刷题 · 模拟考试 · 申论评分 · 学习社区</p>
-
-      <el-tabs v-model="kind">
+  <AuthLayout title="欢迎回来" description="登录波波公考，继续今天的学习。">
+      <el-tabs v-model="kind" class="login-tabs" stretch>
         <el-tab-pane label="考生登录" name="user" />
         <el-tab-pane label="管理员登录" name="manager" />
       </el-tabs>
 
-      <el-form :model="form" @submit.prevent="submit">
-        <el-form-item>
-          <el-input v-model="form.userName" placeholder="用户名" size="large" :prefix-icon="User" />
+      <el-form :model="form" label-position="top" @submit.prevent="submit">
+        <el-form-item label="用户名">
+          <el-input v-model="form.userName" placeholder="请输入用户名" size="large" :prefix-icon="User"
+                    autocomplete="username" />
         </el-form-item>
-        <el-form-item>
-          <el-input v-model="form.password" type="password" placeholder="密码" size="large"
-                    :prefix-icon="Lock" show-password @keyup.enter="submit" />
+        <el-form-item label="密码">
+          <el-input v-model="form.password" type="password" placeholder="请输入密码" size="large"
+                    :prefix-icon="Lock" autocomplete="current-password" show-password @keyup.enter="submit" />
         </el-form-item>
         <el-button type="primary" size="large" class="btn" :loading="loading" @click="submit">
           登录
@@ -25,8 +22,7 @@
       <div class="foot" v-if="kind === 'user'">
         还没有账号？<router-link to="/register">立即注册</router-link>
       </div>
-    </el-card>
-  </div>
+  </AuthLayout>
 </template>
 
 <script setup>
@@ -36,6 +32,7 @@ import { ElMessage } from 'element-plus'
 import { useRouter, useRoute } from 'vue-router'
 import { authApi } from '../api'
 import { useAuthStore } from '../store/auth'
+import AuthLayout from '../components/AuthLayout.vue'
 
 const kind = ref('user')
 const form = reactive({ userName: '', password: '' })
@@ -67,12 +64,16 @@ async function submit() {
 </script>
 
 <style scoped>
-.wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #1f5fbf 0%, #4b8be0 100%); padding: 16px; }
-.card { width: 100%; max-width: 380px; }
-.title { margin: 0; font-size: 24px; color: var(--hh-primary); text-align: center; }
-.plus { font-size: 13px; background: var(--hh-primary); color: #fff; padding: 2px 6px; border-radius: 4px; }
-.sub { text-align: center; margin: 6px 0 4px; }
-.btn { width: 100%; }
-.foot { text-align: center; margin-top: 14px; font-size: 13px; color: #909399; }
+.login-tabs { margin-bottom: 20px; }
+.login-tabs :deep(.el-tabs__header) { margin: 0; }
+.login-tabs :deep(.el-tabs__nav-wrap::after) { background: #edf0f6; height: 1px; }
+.login-tabs :deep(.el-tabs__item) { height: 42px; color: #738097; font-size: 14px; }
+.login-tabs :deep(.el-tabs__item.is-active) { color: var(--hh-primary, #646cff); font-weight: 600; }
+.login-tabs :deep(.el-tabs__active-bar) { height: 3px; border-radius: 3px; }
+.login-tabs :deep(.el-tabs__content) { display: none; }
+.btn { width: 100%; height: 46px; border-radius: 9px; font-weight: 600; }
+.foot { margin-top: 22px; color: #738097; font-size: 13px; text-align: center; }
+.foot a { margin-left: 6px; color: var(--hh-primary, #646cff); font-weight: 600; text-decoration: none; }
+.foot a:hover { text-decoration: underline; }
+.foot a:focus-visible { outline: 2px solid var(--hh-primary, #646cff); outline-offset: 4px; }
 </style>

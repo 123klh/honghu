@@ -1,6 +1,7 @@
 # Maven
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
+backend/_probe/
 
 # Node
 frontend/node_modules/
@@ -27,6 +28,7 @@ frontend/nohup.out
 # Env & Secrets
 .env
 .env.local
+.env.*
 *.pem
 *.key
 backend/ADMIN_CREDENTIALS.txt
@@ -39,3 +41,7 @@ backend/*.pid
 *.tmp
 *.bak
 .cache/
+__pycache__/
+*.py[cod]
+tools/importer/build/
+tools/importer/_probe*

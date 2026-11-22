@@ -52,19 +52,19 @@
           stripe
           style="width: 100%"
         >
-          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="questionId" label="ID" width="80" />
           <el-table-column prop="questionCode" label="题目编号" width="140" />
           <el-table-column prop="questionType" label="类型" width="140">
             <template #default="{ row }">
               <el-tag size="small">{{ row.questionType }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="stem" label="题干" min-width="300">
+          <el-table-column prop="questionStem" label="题干" min-width="300">
             <template #default="{ row }">
-              <div class="question-stem">{{ truncate(row.stem, 80) }}</div>
+              <div class="question-stem">{{ truncate(row.questionStem, 80) }}</div>
             </template>
           </el-table-column>
-          <el-table-column prop="correctAnswer" label="答案" width="80" align="center" />
+          <el-table-column prop="answer" label="答案" width="80" align="center" />
           <el-table-column label="统计" width="120">
             <template #default="{ row }">
               <div class="stats-cell">
@@ -126,9 +126,9 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="题干" prop="stem">
+        <el-form-item label="题干" prop="questionStem">
           <el-input
-            v-model="form.stem"
+            v-model="form.questionStem"
             type="textarea"
             :rows="4"
             placeholder="请输入题干"
@@ -151,8 +151,8 @@
           <el-input v-model="form.optionD" />
         </el-form-item>
 
-        <el-form-item label="正确答案" prop="correctAnswer">
-          <el-radio-group v-model="form.correctAnswer">
+        <el-form-item label="正确答案" prop="answer">
+          <el-radio-group v-model="form.answer">
             <el-radio label="A">A</el-radio>
             <el-radio label="B">B</el-radio>
             <el-radio label="C">C</el-radio>
@@ -195,7 +195,7 @@
         </div>
         <div class="detail-section">
           <div class="label">题干:</div>
-          <div class="content">{{ viewingQuestion.stem }}</div>
+          <div class="content">{{ viewingQuestion.questionStem }}</div>
         </div>
         <div class="detail-section">
           <div class="label">选项:</div>
@@ -208,7 +208,7 @@
         </div>
         <div class="detail-row">
           <span class="label">正确答案:</span>
-          <el-tag type="success">{{ viewingQuestion.correctAnswer }}</el-tag>
+          <el-tag type="success">{{ viewingQuestion.answer }}</el-tag>
         </div>
         <div class="detail-section">
           <div class="label">解析:</div>
@@ -256,12 +256,12 @@ const viewingQuestion = ref(null)
 const form = reactive({
   questionCode: '',
   questionType: '',
-  stem: '',
+  questionStem: '',
   optionA: '',
   optionB: '',
   optionC: '',
   optionD: '',
-  correctAnswer: '',
+  answer: '',
   explanation: ''
 })
 
@@ -272,7 +272,7 @@ const rules = {
   questionType: [
     { required: true, message: '请选择题目类型', trigger: 'change' }
   ],
-  stem: [
+  questionStem: [
     { required: true, message: '请输入题干', trigger: 'blur' }
   ],
   optionA: [
@@ -281,7 +281,7 @@ const rules = {
   optionB: [
     { required: true, message: '请输入选项B', trigger: 'blur' }
   ],
-  correctAnswer: [
+  answer: [
     { required: true, message: '请选择正确答案', trigger: 'change' }
   ]
 }
@@ -291,8 +291,8 @@ async function loadQuestions() {
     loading.value = true
 
     const params = {
-      page: currentPage.value,
-      size: pageSize.value
+      pageNum: currentPage.value,
+      pageSize: pageSize.value
     }
 
     if (filterType.value) params.questionType = filterType.value
@@ -320,12 +320,12 @@ function editQuestion(question) {
   Object.assign(form, {
     questionCode: question.questionCode,
     questionType: question.questionType,
-    stem: question.stem,
+    questionStem: question.questionStem,
     optionA: question.optionA,
     optionB: question.optionB,
     optionC: question.optionC,
     optionD: question.optionD,
-    correctAnswer: question.correctAnswer,
+    answer: question.answer,
     explanation: question.explanation
   })
   showCreateDialog.value = true
@@ -344,10 +344,13 @@ async function submitForm() {
     submitting.value = true
 
     if (editingQuestion.value) {
-      await questionApi.update(editingQuestion.value.id, form)
+      await questionApi.adminUpdate(editingQuestion.value.questionId, {
+        ...editingQuestion.value,
+        ...form
+      })
       ElMessage.success('更新成功')
     } else {
-      await questionApi.create(form)
+      await questionApi.adminCreate(form)
       ElMessage.success('创建成功')
     }
 
@@ -375,7 +378,7 @@ async function deleteQuestion(question) {
       }
     )
 
-    await questionApi.delete(question.id)
+    await questionApi.adminDelete(question.questionId)
     ElMessage.success('删除成功')
     loadQuestions()
 
@@ -391,12 +394,12 @@ function resetForm() {
   Object.assign(form, {
     questionCode: '',
     questionType: '',
-    stem: '',
+    questionStem: '',
     optionA: '',
     optionB: '',
     optionC: '',
     optionD: '',
-    correctAnswer: '',
+    answer: '',
     explanation: ''
   })
   formRef.value?.resetFields()

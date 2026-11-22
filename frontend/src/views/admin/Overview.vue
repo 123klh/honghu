@@ -16,7 +16,7 @@
       <!-- Key Metrics -->
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-icon" style="background: #e8f4fd; color: #409eff">
+          <div class="metric-icon" style="background: #e8f4fd; color: #646cff">
             <el-icon><User /></el-icon>
           </div>
           <div class="metric-content">
@@ -29,7 +29,7 @@
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon" style="background: #f0f9ff; color: #67c23a">
+          <div class="metric-icon" style="background: #f0f9ff; color: #35bca0">
             <el-icon><Document /></el-icon>
           </div>
           <div class="metric-content">
@@ -42,7 +42,7 @@
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon" style="background: #fdf6ec; color: #e6a23c">
+          <div class="metric-icon" style="background: #fdf6ec; color: #dcab5f">
             <el-icon><EditPen /></el-icon>
           </div>
           <div class="metric-content">
@@ -55,7 +55,7 @@
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon" style="background: #fef0f0; color: #f56c6c">
+          <div class="metric-icon" style="background: #fef0f0; color: #d76691">
             <el-icon><ChatDotRound /></el-icon>
           </div>
           <div class="metric-content">
@@ -173,6 +173,7 @@ let userGrowthChart = null
 let activityChart = null
 let questionTypeChart = null
 let popularChart = null
+let chartObserver = null
 
 async function loadData() {
   try {
@@ -191,28 +192,35 @@ async function loadData() {
 
 async function initCharts(statsData) {
   await new Promise(resolve => setTimeout(resolve, 100))
+  if (!userGrowthChartRef.value) return
 
   if (userGrowthChartRef.value) {
-    userGrowthChart = echarts.init(userGrowthChartRef.value)
+    userGrowthChart ||= echarts.init(userGrowthChartRef.value)
     initUserGrowthChart(statsData.userGrowth || [])
   }
 
   if (activityChartRef.value) {
-    activityChart = echarts.init(activityChartRef.value)
+    activityChart ||= echarts.init(activityChartRef.value)
     initActivityChart(statsData.dailyActive || [])
   }
 
   if (questionTypeChartRef.value) {
-    questionTypeChart = echarts.init(questionTypeChartRef.value)
+    questionTypeChart ||= echarts.init(questionTypeChartRef.value)
     initQuestionTypeChart(statsData.questionTypeStats || [])
   }
 
   if (popularChartRef.value) {
-    popularChart = echarts.init(popularChartRef.value)
+    popularChart ||= echarts.init(popularChartRef.value)
     initPopularChart(statsData.popularQuestions || [])
   }
 
   window.addEventListener('resize', handleResize)
+  if (!chartObserver) {
+    chartObserver = new ResizeObserver(handleResize)
+    for (const chartRef of [userGrowthChartRef, activityChartRef, questionTypeChartRef, popularChartRef]) {
+      if (chartRef.value) chartObserver.observe(chartRef.value)
+    }
+  }
 }
 
 function initUserGrowthChart(growthData) {
@@ -241,18 +249,18 @@ function initUserGrowthChart(growthData) {
         type: 'line',
         smooth: true,
         data: counts,
-        itemStyle: { color: '#409eff' },
+        itemStyle: { color: '#646cff' },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(64, 158, 255, 0.3)' },
-            { offset: 1, color: 'rgba(64, 158, 255, 0.05)' }
+            { offset: 0, color: 'rgba(100, 108, 255, 0.3)' },
+            { offset: 1, color: 'rgba(100, 108, 255, 0.05)' }
           ])
         }
       }
     ]
   }
 
-  userGrowthChart.setOption(option)
+  userGrowthChart.setOption({ ...option, animation: !window.matchMedia('(prefers-reduced-motion: reduce)').matches })
 }
 
 function initActivityChart(activityData) {
@@ -282,7 +290,7 @@ function initActivityChart(activityData) {
         data: counts,
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#67c23a' },
+            { offset: 0, color: '#35bca0' },
             { offset: 1, color: '#a8e6a1' }
           ]),
           borderRadius: [4, 4, 0, 0]
@@ -291,7 +299,7 @@ function initActivityChart(activityData) {
     ]
   }
 
-  activityChart.setOption(option)
+  activityChart.setOption({ ...option, animation: !window.matchMedia('(prefers-reduced-motion: reduce)').matches })
 }
 
 function initQuestionTypeChart(typeStats) {
@@ -329,7 +337,7 @@ function initQuestionTypeChart(typeStats) {
     ]
   }
 
-  questionTypeChart.setOption(option)
+  questionTypeChart.setOption({ ...option, animation: !window.matchMedia('(prefers-reduced-motion: reduce)').matches })
 }
 
 function initPopularChart(popularData) {
@@ -362,7 +370,7 @@ function initPopularChart(popularData) {
         data: counts,
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: '#e6a23c' },
+            { offset: 0, color: '#dcab5f' },
             { offset: 1, color: '#f5d9a8' }
           ]),
           borderRadius: [0, 4, 4, 0]
@@ -371,7 +379,7 @@ function initPopularChart(popularData) {
     ]
   }
 
-  popularChart.setOption(option)
+  popularChart.setOption({ ...option, animation: !window.matchMedia('(prefers-reduced-motion: reduce)').matches })
 }
 
 function handleResize() {
@@ -408,6 +416,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  chartObserver?.disconnect()
   userGrowthChart?.dispose()
   activityChart?.dispose()
   questionTypeChart?.dispose()

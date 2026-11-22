@@ -55,7 +55,7 @@ INSERT INTO knowledge_point (kp_id, kp_name, parent_id, subject, sort_order) VAL
 (605, '文章论述', 6, '申论', 5);
 
 INSERT INTO announcement (title, content, status) VALUES
-('欢迎使用波波公考', '系统已内置国考、省考历年真题与专项题库，支持专项练习、模拟考试、错题本、申论智能评分与学情分析。', 1);
+('欢迎使用波波公考', '请在导入题库数据后使用专项练习、模拟考试和申论练习。系统支持错题本与学习统计。', 1);
 
 INSERT INTO exam_countdown (exam_name, exam_date, sort_order, status) VALUES
 ('2027年国家公务员考试', '2026-11-29', 1, 1),

@@ -13,19 +13,26 @@
     </div>
 
     <div v-else-if="questions.length > 0" class="session-content">
+      <div class="session-heading">
+        <h2>刷题练习</h2>
+        <el-button link @click="$router.push('/practice')">返回练习选择</el-button>
+      </div>
       <!-- Progress Header -->
       <div class="progress-header">
         <div class="progress-info">
-          <span class="current-progress">{{ currentIndex + 1 }} / {{ questions.length }}</span>
+          <div class="progress-count">
+            <span class="progress-label">题目进度</span>
+            <span class="current-progress">{{ currentIndex + 1 }} <small>/ {{ questions.length }}</small></span>
+          </div>
           <el-progress
             :percentage="progressPercentage"
             :stroke-width="8"
             :show-text="false"
-            style="flex: 1; margin: 0 20px"
+            class="progress-track"
           />
           <span class="stats">
-            <el-icon><Check /></el-icon> {{ correctCount }}
-            <el-icon style="margin-left: 12px"><Close /></el-icon> {{ wrongCount }}
+            <span class="correct-count"><el-icon><Check /></el-icon> 答对 {{ correctCount }}</span>
+            <span class="wrong-count"><el-icon><Close /></el-icon> 答错 {{ wrongCount }}</span>
           </span>
         </div>
       </div>
@@ -91,7 +98,7 @@
       <el-dialog
         v-model="showSummary"
         title="练习总结"
-        width="500px"
+        width="min(560px, calc(100vw - 32px))"
         :close-on-click-modal="false"
       >
         <div class="summary-content">
@@ -336,163 +343,42 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.practice-session {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.loading-container,
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: 16px;
-}
-
-.loading-container .el-icon {
-  font-size: 48px;
-  color: var(--el-color-primary);
-}
-
-.session-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.progress-header {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.progress-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.current-progress {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--el-color-primary);
-  min-width: 80px;
-}
-
-.stats {
-  display: flex;
-  align-items: center;
-  font-size: 16px;
-  font-weight: 500;
-  min-width: 100px;
-}
-
-.stats .el-icon {
-  margin-right: 4px;
-}
-
-.stats .el-icon:first-child {
-  color: var(--el-color-success);
-}
-
-.stats .el-icon:nth-child(3) {
-  color: var(--el-color-danger);
-}
-
-.question-container {
-  min-height: 400px;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.action-buttons .el-button {
-  min-width: 120px;
-}
-
-.summary-content {
-  padding: 20px 0;
-}
-
-.summary-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 20px;
-  background: var(--el-fill-color-light);
-  border-radius: 8px;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  margin-bottom: 8px;
-}
-
-.stat-value {
-  font-size: 32px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.stat-value.correct {
-  color: var(--el-color-success);
-}
-
-.stat-value.wrong {
-  color: var(--el-color-danger);
-}
-
+.practice-session { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0; }
+.loading-container, .error-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; gap: 16px; color: #8491a5; }
+.loading-container .el-icon { font-size: 40px; color: #646cff; }
+.session-content { display: flex; flex-direction: column; gap: 20px; }
+.session-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.session-heading h2 { margin: 0; font-size: 24px; font-weight: 650; color: #273044; }
+.progress-header { background: #fff; border: 1px solid #edf0f6; border-radius: 12px; padding: 22px 26px; box-shadow: 0 3px 14px rgb(39 48 68 / 3%); }
+.progress-info { display: flex; align-items: center; gap: 24px; }
+.progress-count { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; }
+.progress-label { font-size: 13px; color: #8491a5; }
+.current-progress { font-size: 22px; font-weight: 650; color: #646cff; }
+.current-progress small { font-size: 14px; font-weight: 400; color: #8491a5; }
+.progress-track { flex: 1; min-width: 90px; }
+.stats { display: flex; align-items: center; gap: 18px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.stats span { display: inline-flex; align-items: center; gap: 5px; }
+.correct-count { color: var(--el-color-success); }
+.wrong-count { color: var(--el-color-danger); }
+.action-buttons { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; padding: 20px 24px; background: #fff; border: 1px solid #edf0f6; border-radius: 12px; box-shadow: 0 3px 14px rgb(39 48 68 / 3%); }
+.action-buttons .el-button { min-width: 130px; }
+.action-buttons .el-button + .el-button { margin-left: 0; }
+.summary-content { padding: 10px 0; }
+.summary-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-item { text-align: center; padding: 18px 12px; background: #f5f6fc; border-radius: 9px; }
+.stat-label { font-size: 13px; color: #8491a5; margin-bottom: 10px; }
+.stat-value { font-size: 28px; font-weight: 650; color: #646cff; }
+.stat-value.correct { color: var(--el-color-success); }
+.stat-value.wrong { color: var(--el-color-danger); }
 @media (max-width: 768px) {
-  .practice-session {
-    padding: 12px;
-  }
-
-  .progress-info {
-    flex-wrap: wrap;
-  }
-
-  .current-progress {
-    font-size: 16px;
-    min-width: auto;
-  }
-
-  .stats {
-    font-size: 14px;
-  }
-
-  .summary-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .stat-value {
-    font-size: 24px;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    padding: 16px;
-  }
-
-  .action-buttons .el-button {
-    width: 100%;
-  }
+  .session-heading h2 { font-size: 22px; }
+  .progress-header { padding: 18px; }
+  .progress-info { flex-wrap: wrap; gap: 16px; }
+  .progress-count { gap: 8px; }
+  .current-progress { font-size: 20px; }
+  .stats { width: 100%; justify-content: space-between; font-size: 12px; }
+  .summary-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .action-buttons { padding: 16px; }
+  .action-buttons .el-button { flex: 1; min-width: 110px; }
 }
 </style>

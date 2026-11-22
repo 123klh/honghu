@@ -269,7 +269,7 @@ async function confirmSubmit() {
       userAnswer: answers.value[idx] || ''
     }))
 
-    const duration = Math.floor((Date.now() - sessionData.startTime) / 1000 / 60)
+    const duration = Math.floor((Date.now() - sessionData.startTime) / 1000)
 
     await examApi.submit(sessionData.examId, answerList, duration)
 
@@ -279,8 +279,7 @@ async function confirmSubmit() {
     sessionStorage.removeItem('exam-session')
     showSubmitDialog.value = false
 
-    // Navigate to history detail
-    router.push({ name: 'exam-history', params: { id: sessionData.examId } })
+    router.push({ name: 'exam-history' })
 
   } catch (err) {
     console.error('Failed to submit exam:', err)
@@ -299,7 +298,7 @@ async function autoSubmit() {
       userAnswer: answers.value[idx] || ''
     }))
 
-    const duration = Math.floor((Date.now() - sessionData.startTime) / 1000 / 60)
+    const duration = Math.floor((Date.now() - sessionData.startTime) / 1000)
 
     await examApi.submit(sessionData.examId, answerList, duration)
     sessionStorage.removeItem('exam-session')
@@ -307,7 +306,7 @@ async function autoSubmit() {
     ElMessageBox.alert('考试时间已到，已自动提交', '提示', {
       confirmButtonText: '查看成绩',
       callback: () => {
-        router.push({ name: 'exam-history', params: { id: sessionData.examId } })
+        router.push({ name: 'exam-history' })
       }
     })
 

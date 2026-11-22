@@ -56,7 +56,7 @@ public class CommunityService {
     }
 
     public Map<String, Object> getDiscussion(Long id) {
-        Discussion d = discussionMapper.findById(id);
+        Discussion d = discussionMapper.findViewById(id);
         if (d == null) {
             throw new BusinessException(404, "帖子不存在或已删除");
         }

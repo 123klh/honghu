@@ -32,13 +32,13 @@
           </div>
 
           <div class="requirements">
-            <div class="requirement-item">
+            <div v-if="question.wordLimit" class="requirement-item">
               <el-icon><Edit /></el-icon>
-              <span>字数要求：{{ question.wordLimit || 800 }} 字</span>
+              <span>字数要求：{{ question.wordLimit }} 字</span>
             </div>
             <div class="requirement-item">
               <el-icon><Star /></el-icon>
-              <span>总分：{{ question.totalScore || 100 }} 分</span>
+              <span>总分：{{ question.totalScore || 0 }} 分</span>
             </div>
           </div>
         </div>
@@ -48,7 +48,7 @@
       <div class="answer-section">
         <div class="section-header">
           <h3>我的作答</h3>
-          <div class="word-count" :class="{ warning: wordCount > (question.wordLimit || 800) }">
+          <div class="word-count" :class="{ warning: question.wordLimit && wordCount > question.wordLimit }">
             已输入 {{ wordCount }} 字
             <span v-if="question.wordLimit">/ {{ question.wordLimit }} 字</span>
           </div>
@@ -91,8 +91,8 @@
         <div class="score-header">
           <h3>评分结果</h3>
           <div class="total-score">
-            <span class="score-number">{{ scoreResult.totalScore }}</span>
-            <span class="score-total">/ {{ question.totalScore || 100 }}</span>
+            <span class="score-number">{{ scoreResult.awarded }}</span>
+            <span class="score-total">/ {{ scoreResult.fullMark }}</span>
           </div>
         </div>
 
@@ -100,19 +100,19 @@
         <div class="dimensions">
           <div
             v-for="dim in scoreResult.dimensions"
-            :key="dim.dimension"
+            :key="dim.name"
             class="dimension-card"
           >
             <div class="dimension-header">
-              <span class="dimension-name">{{ dim.dimension }}</span>
-              <span class="dimension-score">{{ dim.score }} / {{ dim.maxScore }}</span>
+              <span class="dimension-name">{{ dim.name }}</span>
+              <span class="dimension-score">{{ Math.round(dim.ratio * 100) }}%</span>
             </div>
             <el-progress
-              :percentage="(dim.score / dim.maxScore) * 100"
-              :color="getProgressColor(dim.score, dim.maxScore)"
+              :percentage="dim.ratio * 100"
+              :color="getProgressColor(dim.ratio, 1)"
             />
-            <p v-if="dim.feedback" class="dimension-feedback">
-              {{ dim.feedback }}
+            <p v-if="dim.note" class="dimension-feedback">
+              {{ dim.note }}
             </p>
           </div>
         </div>
@@ -171,7 +171,13 @@ async function loadQuestion() {
     }
 
     const data = await shenlunApi.detail(questionId)
-    question.value = data
+    question.value = {
+      ...data,
+      id: data.frQuestionId,
+      stem: data.frQuestionStem,
+      totalScore: data.points,
+      referenceAnswer: data.answer
+    }
 
   } catch (err) {
     console.error('Failed to load question:', err)

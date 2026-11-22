@@ -16,10 +16,10 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# 题库素材根目录
-SOURCE_ROOT = r'D:\复刻lk'
-
 HERE = os.path.dirname(os.path.abspath(__file__))
+# 题库素材根目录，可通过 HONGHU_IMPORT_SOURCE_ROOT 指定。
+SOURCE_ROOT = os.path.abspath(os.environ.get(
+    'HONGHU_IMPORT_SOURCE_ROOT', os.path.join(HERE, 'source')))
 BUILD_DIR = os.path.join(HERE, 'build')
 
 os.makedirs(BUILD_DIR, exist_ok=True)

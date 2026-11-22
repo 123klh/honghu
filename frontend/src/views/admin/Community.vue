@@ -63,7 +63,6 @@
           <el-table-column label="统计" width="140">
             <template #default="{ row }">
               <div class="stats-cell">
-                <span><el-icon><View /></el-icon> {{ row.viewCount }}</span>
                 <span><el-icon><ChatDotRound /></el-icon> {{ row.replyCount }}</span>
               </div>
             </template>
@@ -134,7 +133,6 @@
         <div class="detail-meta">
           <span>作者: {{ viewingDiscussion.authorName }}</span>
           <span>发布时间: {{ formatDate(viewingDiscussion.createdAt) }}</span>
-          <span>浏览: {{ viewingDiscussion.viewCount }}</span>
           <span>回复: {{ viewingDiscussion.replyCount }}</span>
         </div>
 
@@ -179,7 +177,6 @@ import {
   Refresh,
   Search,
   Star,
-  View,
   ChatDotRound
 } from '@element-plus/icons-vue'
 import { communityApi } from '@/api'
@@ -202,8 +199,8 @@ async function loadDiscussions() {
     loading.value = true
 
     const params = {
-      page: currentPage.value,
-      size: pageSize.value
+      pageNum: currentPage.value,
+      pageSize: pageSize.value
     }
 
     if (filterStatus.value === 'pinned') params.pinned = true
@@ -236,7 +233,7 @@ async function viewDiscussion(discussion) {
 
 async function pinDiscussion(discussion) {
   try {
-    await communityApi.pin(discussion.id)
+    await communityApi.adminPin(discussion.id, true)
     ElMessage.success('置顶成功')
     loadDiscussions()
   } catch (err) {
@@ -247,7 +244,7 @@ async function pinDiscussion(discussion) {
 
 async function unpinDiscussion(discussion) {
   try {
-    await communityApi.unpin(discussion.id)
+    await communityApi.adminPin(discussion.id, false)
     ElMessage.success('已取消置顶')
     loadDiscussions()
   } catch (err) {
@@ -268,7 +265,7 @@ async function deleteDiscussion(discussion) {
       }
     )
 
-    await communityApi.adminDelete(discussion.id)
+    await communityApi.adminRemove(discussion.id)
     ElMessage.success('删除成功')
     loadDiscussions()
 

@@ -22,6 +22,15 @@ public interface DiscussionMapper {
     @Select("SELECT * FROM discussion WHERE discussion_id = #{id} AND status = 1")
     Discussion findById(Long id);
 
+    @Select("""
+            SELECT d.*, u.user_name AS authorName,
+                   (SELECT COUNT(*) FROM discussion_reply r
+                    WHERE r.discussion_id = d.discussion_id AND r.status = 1) AS replyCount
+            FROM discussion d LEFT JOIN user u ON u.user_id = d.user_id
+            WHERE d.discussion_id = #{id} AND d.status = 1
+            """)
+    Discussion findViewById(Long id);
+
     /**
      * 帖子列表视图：置顶优先、然后按更新时间倒序。keyword 命中标题或正文。
      * 返回 Map 以便一次带出作者名和回复数，避免前端 N+1。

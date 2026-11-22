@@ -6,12 +6,14 @@
         v-if="showFavorite"
         text
         :type="favored ? 'warning' : 'info'"
+        :aria-label="favored ? '取消收藏题目' : '收藏题目'"
         @click.stop="$emit('toggle-favorite')"
       >
         <el-icon>
           <StarFilled v-if="favored" />
           <Star v-else />
         </el-icon>
+        <span>{{ favored ? '已收藏' : '收藏' }}</span>
       </el-button>
     </div>
 
@@ -22,6 +24,7 @@
       @update:model-value="$emit('update:modelValue', $event)"
       :disabled="disabled"
       class="options-group"
+      aria-label="选择答案"
     >
       <el-radio
         v-for="opt in options"
@@ -29,6 +32,7 @@
         :label="opt.value"
         class="option-item"
         :class="{
+          selected: opt.value === modelValue,
           correct: result && opt.value === result.correctAnswer,
           wrong: result && !result.correct && opt.value === modelValue
         }"
@@ -109,129 +113,31 @@ const options = computed(() => {
 </script>
 
 <style scoped>
-.question-card {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.question-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--el-border-color);
-}
-
-.question-number {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--el-color-primary);
-}
-
-.question-stem {
-  font-size: 16px;
-  line-height: 1.8;
-  color: var(--el-text-color-primary);
-  margin-bottom: 20px;
-  white-space: pre-wrap;
-}
-
-.options-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-.option-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 6px;
-  transition: all 0.3s;
-  height: auto;
-  white-space: normal;
-}
-
-.option-item:hover {
-  border-color: var(--el-color-primary);
-  background: var(--el-fill-color-light);
-}
-
-.option-item.correct {
-  border-color: var(--el-color-success);
-  background: var(--el-color-success-light-9);
-}
-
-.option-item.wrong {
-  border-color: var(--el-color-danger);
-  background: var(--el-color-danger-light-9);
-}
-
-.option-item :deep(.el-radio__label) {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-  white-space: normal;
-  line-height: 1.6;
-}
-
-.option-label {
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  flex-shrink: 0;
-}
-
-.option-text {
-  flex: 1;
-  color: var(--el-text-color-primary);
-}
-
-.result-section {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.explanation {
-  padding: 16px;
-  background: var(--el-fill-color-light);
-  border-radius: 8px;
-  border-left: 4px solid var(--el-color-primary);
-}
-
-.explanation-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: var(--el-color-primary);
-}
-
-.explanation-content {
-  line-height: 1.8;
-  color: var(--el-text-color-primary);
-  white-space: pre-wrap;
-}
-
+.question-card { background: #fff; border: 1px solid #edf0f6; border-radius: 12px; padding: 28px; box-shadow: 0 3px 14px rgb(39 48 68 / 3%); }
+.question-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid #edf0f6; }
+.question-number { padding: 6px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; color: #646cff; background: #eeefff; }
+.question-header :deep(.el-button) { gap: 5px; }
+.question-stem { font-size: 17px; line-height: 1.9; color: #273044; margin-bottom: 26px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.options-group { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.option-item { display: flex; align-items: flex-start; width: 100%; min-width: 0; min-height: 56px; margin-right: 0; padding: 16px 18px; border: 1px solid #e6ebf3; border-radius: 9px; background: #fff; transition: border-color .18s, background .18s; height: auto; white-space: normal; }
+.option-item:not(.is-disabled):hover, .option-item.selected { border-color: #646cff; background: #f5f5ff; }
+.option-item:focus-within { outline: 2px solid #bec2ff; outline-offset: 2px; }
+.option-item.correct { border-color: var(--el-color-success); background: var(--el-color-success-light-9); }
+.option-item.wrong { border-color: var(--el-color-danger); background: var(--el-color-danger-light-9); }
+.option-item :deep(.el-radio__input) { margin-top: 4px; }
+.option-item :deep(.el-radio__label) { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-width: 0; white-space: normal; line-height: 1.8; font-size: 15px; }
+.option-label { font-weight: 650; color: #273044; flex-shrink: 0; }
+.option-text { flex: 1; min-width: 0; color: #465168; overflow-wrap: anywhere; }
+.result-section { margin-top: 24px; display: flex; flex-direction: column; gap: 18px; }
+.explanation { padding: 20px; background: #f7f8fe; border-radius: 9px; border-left: 3px solid #646cff; }
+.explanation-header { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; font-weight: 600; font-size: 14px; color: #646cff; }
+.explanation-content { line-height: 1.9; font-size: 15px; color: #465168; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 768px) {
-  .question-card {
-    padding: 16px;
-  }
-
-  .question-stem {
-    font-size: 15px;
-  }
-
-  .option-item {
-    padding: 10px;
-  }
+  .question-card { padding: 20px 16px; }
+  .question-stem { font-size: 16px; line-height: 1.85; }
+  .option-item { padding: 13px 12px; }
+  .option-item :deep(.el-radio__label) { font-size: 14px; gap: 7px; }
+  .explanation { padding: 16px; }
 }
+@media (prefers-reduced-motion: reduce) { .option-item { transition: none; } }
 </style>
