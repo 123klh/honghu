@@ -4,7 +4,7 @@
 
 <div align="center">
 
-![波波公考登录页面](docs/screenshots/soybean-login.png)
+![波波公考登录页，可选择考生登录或管理员登录](docs/screenshots/current-login.png)
 
 **公务员考试在线学习与刷题平台**
 
@@ -43,7 +43,13 @@
 
 界面采用用户选定的 Soybean 蓝紫学习工作台风格，统一登录、注册、考生端和管理端的配色、文字层级与卡片外观。桌面端使用白色左侧导航与顶栏；考生可从导航访问首页、模块刷题、模拟考试、申论练习、错题本、我的收藏、学习社区、学习统计和考试记录。移动端保留五个常用底部入口，其他页面通过顶栏菜单抽屉访问。
 
-![蓝紫学习首页](docs/screenshots/soybean-home.png)
+下图使用示例学习记录。首页上半区展示答题趋势和科目分布，下半区提供学习入口和社区动态。
+
+![考生首页的学习指标、两张图表、快速开始和社区动态](docs/screenshots/current-home.png)
+
+点击首页的“学习统计”，可以按科目和日期查看答题量与正确率。
+
+![学习统计页的四项指标和四个图表分区](docs/screenshots/current-stats.png)
 
 设计参考与改版记录见 [蓝紫学习工作台改版说明](docs/design/soybean-redesign.md)。
 
