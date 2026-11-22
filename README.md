@@ -83,12 +83,12 @@
 
 | 用途 | 默认地址 |
 | --- | --- |
-| 前端及登录页面 | [http://localhost:7001/](http://localhost:7001/) |
-| 管理端 | [http://localhost:7001/admin](http://localhost:7001/admin) |
-| 后端健康检查 | [http://localhost:8080/api/health](http://localhost:8080/api/health) |
-| Swagger 文档 | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) |
-| OpenAPI JSON | [http://localhost:8080/api-docs](http://localhost:8080/api-docs) |
-| MySQL 数据库 | `localhost:3306/honghu` |
+| 前端及登录页面 | [http://localhost:7401/](http://localhost:7401/) |
+| 管理端 | [http://localhost:7401/admin](http://localhost:7401/admin) |
+| 后端健康检查 | [http://localhost:18080/api/health](http://localhost:18080/api/health) |
+| Swagger 文档 | [http://localhost:18080/swagger-ui.html](http://localhost:18080/swagger-ui.html) |
+| OpenAPI JSON | [http://localhost:18080/api-docs](http://localhost:18080/api-docs) |
+| MySQL 数据库 | `localhost:13306/honghu` |
 
 ### 一键启动与停止
 
@@ -243,8 +243,8 @@ py -3 tools/importer/build_shenlun_rubric.py --help
 
 Swagger 页面与 OpenAPI JSON 由当前运行的后端生成。
 
-- [Swagger UI](http://localhost:8080/swagger-ui.html)
-- [OpenAPI JSON](http://localhost:8080/api-docs)
+- [Swagger UI](http://localhost:18080/swagger-ui.html)
+- [OpenAPI JSON](http://localhost:18080/api-docs)
 
 常用接口包括以下路径。
 

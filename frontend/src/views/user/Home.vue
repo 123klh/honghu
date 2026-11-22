@@ -14,15 +14,17 @@
       </div>
     </section>
 
-    <div class="metric-grid" aria-label="学习概况">
-      <div v-for="metric in metrics" :key="metric.label" class="metric-card" :class="'metric--' + metric.tone">
-        <span class="metric-label">{{ metric.label }}</span>
-        <strong class="metric-value">{{ metric.value }}</strong>
-        <el-icon class="metric-icon"><component :is="metric.icon" /></el-icon>
-      </div>
-    </div>
+    <HomeKpiStrip
+      :total-answered="stats?.totalAnswered ?? 0"
+      :today-answered="todayAnswered"
+      :accuracy-rate="stats?.accuracy ?? 0"
+      :submitted-exams="stats?.examsTaken ?? 0"
+      :last-exam-score="lastExamScore"
+      :due-wrong-count="wrong?.wrongCount ?? 0"
+      @review-wrong="$router.push('/wrong')"
+    />
 
-    <div class="home-chart-grid">
+    <div class="home-panels">
       <section class="surface chart-panel">
         <div class="panel-heading"><h2>近30天答题趋势</h2><router-link to="/stats">学习统计<el-icon><ArrowRight /></el-icon></router-link></div>
         <LearningChart v-if="stats" kind="activity" :data="stats.dailyActivity || []" compact />
@@ -33,9 +35,6 @@
         <LearningChart v-if="stats" kind="subject" :data="stats.subjectBreakdown || []" compact />
         <div v-else class="chart-placeholder">{{ statsFailed ? '统计数据暂时无法加载，请刷新重试' : '正在加载科目分布…' }}</div>
       </section>
-    </div>
-
-    <div class="home-bottom-grid">
       <section class="surface quick-panel">
         <div class="panel-heading"><h2>快速开始</h2><span class="muted">选择今天的学习内容</span></div>
         <div class="entry-grid">
@@ -63,24 +62,24 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { statsApi, practiceApi, communityApi } from '../../api'
+import { statsApi, practiceApi, communityApi, examApi } from '../../api'
 import { useAuthStore } from '../../store/auth'
 import LearningChart from '../../components/LearningChart.vue'
+import HomeKpiStrip from '../../components/HomeKpiStrip.vue'
 
 const auth = useAuthStore()
 const stats = ref(null)
 const wrong = ref(null)
 const discussions = ref([])
+const lastExamScore = ref(null)
 const statsFailed = ref(false)
 const discussionsFailed = ref(false)
 const today = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date())
-const accuracy = computed(() => stats.value?.totalAnswered > 0 ? (stats.value.accuracy * 100).toFixed(1) + '%' : '—')
-const metrics = computed(() => [
-  { label: '累计答题', value: stats.value?.totalAnswered ?? '—', icon: 'EditPen', tone: 'pink' },
-  { label: '正确率', value: accuracy.value, icon: 'CircleCheck', tone: 'purple' },
-  { label: '已提交考试', value: stats.value?.examsTaken ?? '—', icon: 'Notebook', tone: 'blue' },
-  { label: '待复习错题', value: wrong.value?.wrongCount ?? '—', icon: 'Collection', tone: 'orange' }
-])
+const todayAnswered = computed(() => {
+  const now = new Date()
+  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return Number(stats.value?.dailyActivity?.find(item => String(item.day).slice(0, 10) === date)?.answered || 0)
+})
 const entries = [
   { name: '模块刷题', desc: '按题型专项训练', to: '/practice', icon: 'EditPen', tone: 'purple' },
   { name: '模拟考试', desc: '整卷计时实战', to: '/exams', icon: 'Notebook', tone: 'orange' },
@@ -94,13 +93,16 @@ function formatDate(value) {
 }
 onMounted(async () => {
   const results = await Promise.allSettled([
-    statsApi.me(30), practiceApi.wrongStats(), communityApi.list({ pageNum: 1, pageSize: 3 })
+    statsApi.me(30), practiceApi.wrongStats(), communityApi.list({ pageNum: 1, pageSize: 3 }), examApi.history()
   ])
   if (results[0].status === 'fulfilled') stats.value = results[0].value
   else statsFailed.value = true
   if (results[1].status === 'fulfilled') wrong.value = results[1].value
   if (results[2].status === 'fulfilled') discussions.value = results[2].value.items
   else discussionsFailed.value = true
+  if (results[3].status === 'fulfilled') {
+    lastExamScore.value = results[3].value.find(record => record.status === 'SUBMITTED' && record.score != null)?.score ?? null
+  }
 })
 </script>
 
@@ -114,14 +116,22 @@ onMounted(async () => {
 .welcome-actions { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
 .welcome-date { color: #8491a5; font-size: 12px; }
 .welcome-actions .el-icon { margin-right: 6px; }
-.home-chart-grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 20px; }
+.home-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 1px;
+  border: 1px solid var(--hh-border-strong);
+  border-radius: var(--hh-radius-sm);
+  overflow: hidden;
+  background: var(--hh-border-strong);
+}
+.home-panels > section { background: var(--hh-surface); }
 .chart-panel { padding: 21px 22px 16px; min-width: 0; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .panel-heading h2 { margin: 0; font-size: 16px; font-weight: 600; }
 .panel-heading a { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; white-space: nowrap; }
 .panel-heading > .el-icon { color: #a2a8d9; }
 .chart-placeholder { display: grid; place-items: center; height: 255px; color: #8491a5; font-size: 13px; }
-.home-bottom-grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 20px; }
 .quick-panel, .community-panel { padding: 21px 22px; min-width: 0; }
 .entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; }
 .entry-link { display: flex; align-items: center; gap: 12px; padding: 16px 8px; border-radius: 9px; color: #273044; transition: background .15s; min-width: 0; }
@@ -138,7 +148,7 @@ onMounted(async () => {
 .discussion-preview-copy > span { font-size: 11px; color: #8491a5; }.reply-number { margin-left: 8px; }
 .community-footer { display: flex; align-items: center; gap: 7px; color: #8491a5; font-size: 12px; padding-top: 16px; }.community-footer > :last-child { margin-left: auto; }
 .community-empty { display: grid; place-items: center; min-height: 150px; text-align: center; color: #8491a5; font-size: 13px; }
-@media (max-width: 1100px) { .welcome-date { display: none; }.home-chart-grid, .home-bottom-grid { grid-template-columns: 1.3fr 1fr; }.entry-grid { grid-template-columns: 1fr; } }
-@media (max-width: 768px) { .home-page { gap: 16px; }.welcome-panel { padding: 20px 18px; flex-wrap: wrap; gap: 15px; }.welcome-panel h1 { font-size: 20px; }.welcome-actions { width: 100%; justify-content: flex-end; }.welcome-date { display: block; margin-right: auto; }.home-chart-grid, .home-bottom-grid { grid-template-columns: 1fr; gap: 16px; }.chart-panel, .quick-panel, .community-panel { padding: 18px; }.entry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }.entry-link { gap: 9px; padding: 13px 2px; }.entry-icon { width: 35px; height: 35px; }.entry-arrow { display: none; }.entry-copy > span { font-size: 10px; }.panel-heading h2 { font-size: 15px; } }
+@media (max-width: 1100px) { .welcome-date { display: none; }.home-panels { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }.entry-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .home-page { gap: 16px; }.welcome-panel { padding: 20px 18px; flex-wrap: wrap; gap: 15px; }.welcome-panel h1 { font-size: 20px; }.welcome-actions { width: 100%; justify-content: flex-end; }.welcome-date { display: block; margin-right: auto; }.home-panels { grid-template-columns: minmax(0, 1fr); }.chart-panel, .quick-panel, .community-panel { padding: 18px; }.entry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }.entry-link { gap: 9px; padding: 13px 2px; }.entry-icon { width: 35px; height: 35px; }.entry-arrow { display: none; }.entry-copy > span { font-size: 10px; }.panel-heading h2 { font-size: 15px; } }
 @media (max-width: 360px) { .entry-grid { grid-template-columns: 1fr; } }
 </style>

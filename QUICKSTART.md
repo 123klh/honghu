@@ -7,7 +7,7 @@
 - Windows 10/11，使用 PowerShell 终端。
 - JDK 21，`JAVA_HOME` 指向 JDK 安装目录，`java.exe` 可从 PATH 调用。
 - Node.js 18+ 与 npm。
-- MySQL 8，默认连接端口为 `3306`。Windows 服务名可按本机安装调整。
+- MySQL 8，默认连接端口为 `13306`。Windows 服务名可按本机安装调整。
 - 后端使用项目自带的 Maven Wrapper，在 `backend` 目录执行 `.\mvnw.cmd`。
 
 可在 PowerShell 中检查环境。
@@ -21,35 +21,23 @@ $env:JAVA_HOME
 
 ## 一键启动
 
-在 PowerShell 中运行以下命令。若要从资源管理器双击启动脚本，请先将环境变量配置为 Windows 用户或系统环境变量。
-
-启动前在同一个 PowerShell 会话中设置数据库密码和 JWT 签名密钥。以下方式会将数据库密码以隐藏输入读取，随机生成 32 字节密钥。关闭该会话后需要重新设置，使用会话变量时应在当前 PowerShell 中启动服务。
-
-```powershell
-$securePassword = Read-Host 'MySQL password' -AsSecureString
-$env:HONGHU_DB_PASSWORD = [System.Net.NetworkCredential]::new('', $securePassword).Password
-$env:HONGHU_JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-```
-
-```powershell
-.\一键启动.bat
-```
+双击仓库根目录的 `一键启动.bat`，页面会自动打开。默认本机数据库的密码验证成功后会加密保存在当前 Windows 账户下，以后双击即可直接启动。
 
 脚本通过 `start.ps1` 检查已有服务，并尝试启动已安装且处于停止状态的 MySQL 服务。后端需要启动时先构建 JAR，前端需要启动时检查并安装缺少的 Vite 依赖，随后等待前后端就绪。数据库启动需要管理员权限时，Windows 会显示权限确认，点击“是”继续。
 
-已有服务正常时直接复用。启动期间再次运行会提示正在启动；其他服务占用 `8080` 或 `7001` 时会报告端口错误。前后端在后台运行，启动窗口显示访问地址后可按 Enter 关闭。
+已有服务正常时直接复用。启动期间再次运行会提示正在启动；其他服务占用 `18080` 或 `7401` 时会报告端口错误。前后端在后台运行，启动成功后窗口会自动关闭。
 
 ## 访问地址
 
 | 用途 | 地址 |
 | --- | --- |
-| 登录及考生端 | [http://localhost:7001/](http://localhost:7001/) |
-| 管理端 | [http://localhost:7001/admin](http://localhost:7001/admin) |
-| 后端健康检查 | [http://localhost:8080/api/health](http://localhost:8080/api/health) |
-| Swagger 接口文档 | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) |
-| OpenAPI JSON | [http://localhost:8080/api-docs](http://localhost:8080/api-docs) |
+| 登录及考生端 | [http://localhost:7401/](http://localhost:7401/) |
+| 管理端 | [http://localhost:7401/admin](http://localhost:7401/admin) |
+| 后端健康检查 | [http://localhost:18080/api/health](http://localhost:18080/api/health) |
+| Swagger 接口文档 | [http://localhost:18080/swagger-ui.html](http://localhost:18080/swagger-ui.html) |
+| OpenAPI JSON | [http://localhost:18080/api-docs](http://localhost:18080/api-docs) |
 
-MySQL 默认使用 `localhost:3306`，数据库名称为 `honghu`。Vite 将 `/api` 请求代理到 `http://localhost:8080`。如使用其他端口，请同步设置 `HONGHU_DB_URL`。
+MySQL 默认使用 `localhost:13306`，数据库名称为 `honghu`。Vite 将 `/api` 请求代理到 `http://localhost:18080`。如使用其他端口，请同步设置 `HONGHU_DB_URL`。
 
 ## 登录账号
 
@@ -115,7 +103,7 @@ MySQL 由操作系统服务管理。数据库连接配置位于 `backend/src/mai
 在新的 MySQL 环境中先创建数据库，再设置连接环境变量。
 
 ```powershell
-mysql.exe -P 3306 -u root -p
+mysql.exe -P 13306 -u root -p
 ```
 
 进入 MySQL 客户端后执行以下 SQL。
@@ -145,16 +133,16 @@ npm.cmd run dev
 检查实际监听进程及 Windows 保留端口范围。
 
 ```powershell
-Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 7001, 8080, 3306 }
+Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 7401, 18080, 13306 }
 netsh interface ipv4 show excludedportrange protocol=tcp
 netsh interface ipv6 show excludedportrange protocol=tcp
 ```
 
-前端默认使用 `7001`，后端默认使用 `8080`。前端端口配置在 `frontend/vite.config.js`，数据库连接由 `HONGHU_DB_URL` 配置。
+前端默认使用 `7401`，一键启动的后端使用 `18080`（单独运行 Spring Boot 时默认为 `8080`）。前端端口配置在 `frontend/vite.config.js`，数据库连接由 `HONGHU_DB_URL` 配置。
 
 ### 前端请求返回 500 或连接被拒绝
 
-检查 `http://localhost:8080/api/health` 和后端日志。后端停止时，Vite 代理请求会失败，可重新执行一键启动恢复服务。
+检查 `http://localhost:18080/api/health` 和后端日志。后端停止时，Vite 代理请求会失败，可重新执行一键启动恢复服务。
 
 ### 管理员登录失败
 

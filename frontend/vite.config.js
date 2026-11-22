@@ -42,9 +42,9 @@ export default defineConfig({
     })
   ],
   server: {
-    port: 7001,
+    port: 7401,
     proxy: {
-      '/api': { target: 'http://localhost:8080', changeOrigin: true }
+      '/api': { target: process.env.HONGHU_BACKEND_URL || 'http://localhost:8080', changeOrigin: true }
     }
   }
 })

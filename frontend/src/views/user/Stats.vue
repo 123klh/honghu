@@ -53,11 +53,38 @@ onMounted(loadStats)
 .stats-page { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
 .stats-heading h1 { margin: 0 0 7px; font-size: 26px; font-weight: 650; line-height: 1.4; }
 .stats-heading p { color: #8491a5; margin: 0; font-size: 13px; }
-.stats-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
-.stats-panel { padding: 22px; min-width: 0; }
+.metric-grid, .stats-panels {
+  display: grid;
+  gap: 1px;
+  background: var(--hh-border-strong);
+  border: 1px solid var(--hh-border-strong);
+  border-radius: var(--hh-radius-sm);
+  overflow: hidden;
+}
+.metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.metric-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 14px 20px;
+  background: var(--hh-surface);
+}
+.metric-label { color: var(--hh-text-secondary); font-size: 13px; }
+.metric-value { grid-column: 1 / -1; font-size: 24px; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.metric-icon { grid-column: 2; grid-row: 1; color: var(--hh-muted); }
+.stats-panels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stats-panel { padding: 22px; min-width: 0; background: var(--hh-surface); }
 .stats-panel-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 17px; }
 .stats-panel-heading h2 { font-size: 16px; font-weight: 600; margin: 0; }
 .stats-panel-heading .el-icon { color: #a2a8d9; font-size: 18px; }
 .stats-loading { padding: 25px; }.stats-error { padding: 22px; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
-@media (max-width: 768px) { .stats-page { gap: 16px; }.stats-heading h1 { font-size: 23px; }.stats-panels { grid-template-columns: 1fr; gap: 16px; }.stats-panel { padding: 18px; } }
+@media (max-width: 768px) {
+  .stats-page { gap: 16px; }
+  .stats-heading h1 { font-size: 23px; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric-card { padding: 12px 16px; }
+  .stats-panels { grid-template-columns: minmax(0, 1fr); }
+  .stats-panel { padding: 18px; }
+}
 </style>

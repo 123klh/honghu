@@ -52,6 +52,7 @@
           <span class="location-divider" aria-hidden="true">/</span>
           <span class="location-current">{{ currentTitle }}</span>
         </div>
+        <ThemeSwitcher />
         <el-dropdown class="header-account" trigger="click" @command="$emit('command', $event)">
           <button type="button" class="user-trigger" :aria-label="`${displayName}，打开账户菜单`">
             <span class="user-avatar" aria-hidden="true">{{ displayName?.slice(0, 1)?.toUpperCase() || '学' }}</span>
@@ -124,6 +125,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ArrowDown, Close, Expand, Fold, Menu } from '@element-plus/icons-vue'
 import BrandLogo from './BrandLogo.vue'
+import ThemeSwitcher from './ThemeSwitcher.vue'
 
 const props = defineProps({
   groups: { type: Array, required: true },

@@ -1,109 +1,339 @@
+/* ==========================================================================
+   波波公考 (HongHu) — 升级版全局配色与排版样式 (frontend/src/assets/main.css)
+   兼容原有 --hh-* / --el-* 变量与 .workspace-* / .page / .stem 类名
+   新增：1) 去后台渐变感的克制色板  2) 苹方优先字体栈与等宽数字
+        3) 护眼纸感 [data-theme="paper"]
+        4) 刷题专注限宽与白底轻线条 KPI 卡片样式
+   ========================================================================== */
+
 :root {
   color-scheme: light;
-  --hh-primary: #646cff;
-  --hh-bg: #f7f9fc;
+
+  /* 1. 品牌与语义色（沉稳靛蓝替代偏亮荧光蓝紫，长时刷题不刺眼） */
+  --hh-primary: #4353e8;
+  --hh-primary-hover: #3543c9;
+  --hh-primary-soft: rgba(67, 83, 232, 0.08);
+  --hh-tint: #eef0ff;
+  --hh-hover-bg: #f4f6fc;
+
+  /* 2. 中性画布与层级 */
+  --hh-bg: #f6f7f9;
   --hh-surface: #ffffff;
-  --hh-text: #273044;
-  --hh-muted: #8491a5;
-  --hh-border: #edf0f6;
-  --hh-tint: #eeefff;
+  --hh-surface-subtle: #fafbfc;
+  --hh-text: #182030;
+  --hh-text-secondary: #4b5565;
+  --hh-muted: #7b8698;
+  --hh-border: #e8ecf2;
+  --hh-border-strong: #d5dce6;
+
+  /* 3. 状态色（正确/提醒/错题，保持高对比度） */
+  --hh-success: #168a6e;
+  --hh-success-soft: rgba(22, 138, 110, 0.1);
+  --hh-warning: #c27816;
+  --hh-warning-soft: rgba(194, 120, 22, 0.1);
+  --hh-danger: #d1435b;
+  --hh-danger-soft: rgba(209, 67, 91, 0.1);
+
+  /* 4. 尺寸、圆角与阴影 */
+  --sidebar-width: 232px;
+  --header-height: 60px;
   --hh-radius: 12px;
-  --hh-shadow: 0 3px 16px rgba(37, 48, 75, .035);
-  --el-color-primary: #646cff;
-  --el-color-primary-light-3: #9298ff;
-  --el-color-primary-light-5: #b2b6ff;
-  --el-color-primary-light-7: #d1d3ff;
-  --el-color-primary-light-8: #e0e2ff;
-  --el-color-primary-light-9: #eeefff;
-  --el-color-primary-dark-2: #545bcc;
-  --el-color-success: #279e86;
-  --el-color-success-light-9: #eaf7f2;
-  --el-color-warning: #bf812d;
-  --el-color-warning-light-9: #fff7e8;
-  --el-color-danger: #d55d78;
-  --el-color-danger-light-9: #fdf0f3;
-  --el-text-color-primary: #273044;
-  --el-text-color-regular: #596579;
-  --el-text-color-secondary: #8491a5;
-  --el-border-color: #e5e9f1;
-  --el-border-color-light: #edf0f6;
-  --el-border-color-lighter: #f0f2f7;
-  --el-fill-color-light: #f7f9fc;
-  --el-fill-color-blank: #ffffff;
-  --el-border-radius-base: 8px;
-  --el-font-family: 'Microsoft YaHei', 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --hh-radius-sm: 8px;
+  --hh-shadow: 0 2px 10px rgba(24, 32, 48, 0.035);
+  --hh-shadow-hover: 0 6px 20px rgba(24, 32, 48, 0.06);
+
+  /* 5. 字体栈（修正顺序：macOS/iOS 优先苹方，Windows 优先微软雅黑） */
+  --hh-font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Noto Sans SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --hh-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* 6. 同步覆盖 Element Plus 变量 */
+  --el-font-family: var(--hh-font-sans);
+  --el-color-primary: var(--hh-primary);
+  --el-color-primary-light-3: #7581ef;
+  --el-color-primary-light-5: #9da6f5;
+  --el-color-primary-light-7: #c5cbf9;
+  --el-color-primary-light-8: #d9ddfb;
+  --el-color-primary-light-9: var(--hh-tint);
+  --el-color-primary-dark-2: var(--hh-primary-hover);
+  --el-color-success: var(--hh-success);
+  --el-color-warning: var(--hh-warning);
+  --el-color-danger: var(--hh-danger);
+  --el-bg-color: var(--hh-surface);
+  --el-bg-color-page: var(--hh-bg);
+  --el-text-color-primary: var(--hh-text);
+  --el-text-color-regular: var(--hh-text-secondary);
+  --el-text-color-secondary: var(--hh-muted);
+  --el-border-color: var(--hh-border-strong);
+  --el-border-color-light: var(--hh-border);
+  --el-border-radius-base: var(--hh-radius-sm);
 }
-* { box-sizing: border-box; }
-html, body, #app { margin: 0; min-height: 100%; background: var(--hh-bg); }
-body { color: var(--hh-text); font: 14px/1.6 var(--el-font-family); -webkit-font-smoothing: antialiased; }
-button, input, textarea, select { font-family: inherit; }
-button, a { -webkit-tap-highlight-color: transparent; }
-a { color: var(--hh-primary); text-decoration: none; }
-a:hover { color: #545bcc; }
-button:focus-visible, a:focus-visible { outline: 3px solid #a8acff; outline-offset: 3px; }
-svg { vertical-align: middle; }
-::selection { background: #dfe2ff; }
-.page { padding: 0; max-width: 1400px; margin: 0 auto; }
-.page-title { color: var(--hh-text); font-size: 25px; line-height: 1.35; font-weight: 650; margin: 0 0 20px; }
-.muted { color: #78869b; font-size: 13px; }
-.stem { font-size: 16px; line-height: 1.9; white-space: pre-wrap; }
-.material { max-height: 360px; overflow-y: auto; line-height: 1.95; white-space: pre-wrap; background: #f7f9fc; padding: 20px; border-radius: 10px; }
-.el-card { border-color: var(--hh-border); border-radius: var(--hh-radius); box-shadow: var(--hh-shadow); }
-.el-card__body { padding: 22px; }
-.el-card.is-always-shadow, .el-card.is-hover-shadow:hover { box-shadow: 0 6px 20px rgba(52, 64, 97, .06); }
-.el-button { font-weight: 500; border-radius: 8px; }
-.el-button--primary { box-shadow: 0 3px 9px #646cff16; }
-.el-button--large { min-height: 44px; }
-.el-input__wrapper, .el-textarea__inner { background-color: #fff; border-radius: 8px; }
-.el-form-item__label { color: #596579; font-weight: 500; }
-.el-tabs__item { font-weight: 500; }
-.el-tabs__nav-wrap::after { background-color: #eef1f6; height: 1px; }
-.el-tag { border-radius: 6px; font-weight: 500; }
-.el-table { --el-table-header-bg-color: #f7f9fc; --el-table-border-color: #edf0f6; --el-table-row-hover-bg-color: #f8f9ff; color: #596579; }
-.el-table th.el-table__cell { color: #78869b; font-size: 12px; font-weight: 600; height: 46px; }
-.el-table td.el-table__cell { padding: 14px 0; }
-.el-dialog { border-radius: 14px; padding: 24px; }
-.el-dialog__title { font-weight: 600; }
-.el-dropdown-menu { padding: 8px; border-radius: 10px; }
-.el-dropdown-menu__item { border-radius: 6px; }
-.el-pagination { flex-wrap: wrap; gap: 8px; }
-.el-empty__description p { color: #8491a5; }
-.el-avatar { background: #eeefff; color: #646cff; }
-.surface { background: #fff; border: 1px solid var(--hh-border); border-radius: var(--hh-radius); box-shadow: var(--hh-shadow); }
-.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
-.metric-grid > .metric-card { position: relative; overflow: hidden; min-width: 0; min-height: 115px; padding: 19px 23px; border-radius: 11px; color: #fff; box-shadow: 0 5px 14px #5460910a; }
-.metric--pink { background: linear-gradient(120deg, #be4c91, #b23e83); }
-.metric--purple { background: linear-gradient(120deg, #7c64cd, #6951b6); }
-.metric-grid > .metric--blue { background: linear-gradient(120deg, #83d4ee, #55b4e3); color: #193b52; }
-.metric-grid > .metric--orange { background: linear-gradient(120deg, #ffcf8b, #f3af58); color: #60380b; }
-.metric-grid .metric-label { position: relative; z-index: 1; display: block; font-size: 12px; color: inherit; }
-.metric-grid .metric-value { position: relative; z-index: 1; display: block; font-weight: 600; font-size: 30px; line-height: 1.25; margin-top: 14px; font-variant-numeric: tabular-nums; }
-.metric-grid .metric-icon { position: absolute; right: 20px; bottom: 18px; font-size: 50px; opacity: .22; }
-.workspace .workspace-main > :is(.exams-page, .shenlun-page, .wrong-book-page, .favorites-page, .exam-history-page, .admin-overview, .admin-questions, .admin-community) { padding: 0; width: 100%; }
-.workspace .workspace-main .page-header { margin-bottom: 24px; }
-.workspace .workspace-main .page-header h2 { font-size: 25px; font-weight: 650; line-height: 1.4; }
-.workspace .workspace-main .subtitle { font-size: 13px; }
-.workspace .workspace-main :is(.exam-tabs, .filter-bar, .exam-card, .question-card, .question-section, .answer-section, .chart-card, .history-tabs, .favorites-tabs) { border-radius: 12px; border-color: #edf0f6; box-shadow: var(--hh-shadow); }
-.workspace .admin-overview .metric-icon { width: 48px; height: 48px; font-size: 27px; }
-.workspace .admin-overview .metric-card { padding: 20px; }
-.workspace .admin-overview .metric-value { font-size: 30px; }
-@media (min-width: 1200px) {
-  .workspace .admin-overview .metrics-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .workspace .admin-overview .charts-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ==========================================================================
+   主题 2：护眼纸感模式（切换方式：document.documentElement.dataset.theme = 'paper'）
+   适合白天/台灯下长时间刷行测与读申论材料
+   ========================================================================== */
+:root[data-theme='paper'] {
+  color-scheme: light;
+  --hh-primary: #3b4fd4;
+  --hh-primary-hover: #2f40b5;
+  --hh-tint: #eae9f6;
+  --hh-hover-bg: #f1eee7;
+
+  --hh-bg: #f3efe6;
+  --hh-surface: #fbf9f4;
+  --hh-surface-subtle: #f6f2ea;
+  --hh-text: #262420;
+  --hh-text-secondary: #534f47;
+  --hh-muted: #827c71;
+  --hh-border: #e5dfd3;
+  --hh-border-strong: #d4ccbd;
+  --hh-shadow: 0 2px 10px rgba(45, 38, 26, 0.04);
+
+  --el-bg-color: var(--hh-surface);
+  --el-bg-color-page: var(--hh-bg);
+  --el-fill-color-blank: var(--hh-surface);
+  --el-text-color-primary: var(--hh-text);
+  --el-text-color-regular: var(--hh-text-secondary);
+  --el-border-color: var(--hh-border-strong);
+  --el-border-color-light: var(--hh-border);
 }
-@media (max-width: 768px) {
-  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .metric-grid > .metric-card { min-height: 108px; padding: 17px 18px; }
-  .metric-grid .metric-value { font-size: 27px; }
-  .metric-grid .metric-icon { right: 14px; font-size: 41px; }
-  .page-title { font-size: 23px; margin-bottom: 18px; }
-  .el-card__body { padding: 18px; }
-  .el-dialog { width: calc(100% - 28px) !important; max-width: 600px; padding: 20px; }
-  .el-message-box { width: calc(100% - 32px); }
-  .el-form--inline .el-form-item { max-width: 100%; margin-right: 12px; }
-  .el-pagination__sizes { display: none; }
-  .hide-mobile { display: none !important; }
+
+/* ==========================================================================
+   基础重置与全局排版
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--hh-bg);
+  color: var(--hh-text);
+  font-family: var(--hh-font-sans);
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* 等宽数字：防止倒计时、正确率、答题统计数字抖动 */
+.num-tabular,
+.el-statistic__number,
+.el-table__cell,
+.kpi-value,
+.exam-timer {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 页面标题层级 */
+.page {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.page-title {
+  margin: 0 0 6px;
+  font-size: 24px;
+  line-height: 1.32;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--hh-text);
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--hh-muted);
+}
+
+/* 统一 Element Plus 卡片质感：去重阴影，强调 1px 精致边界 */
+.el-card {
+  background-color: var(--hh-surface);
+  border: 1px solid var(--hh-border);
+  border-radius: var(--hh-radius);
+  box-shadow: var(--hh-shadow);
+  color: var(--hh-text);
+}
+
+.el-card.is-always-shadow,
+.el-card.is-hover-shadow:hover {
+  box-shadow: var(--hh-shadow-hover);
+}
+
+/* ==========================================================================
+   首页去“后台渐变感”：白底轻线条 KPI 指标条
+   用法：替换首页 4 张彩色渐变统计卡片
+   ========================================================================== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  position: relative;
+  padding: 18px 20px;
+  background: var(--hh-surface);
+  border: 1px solid var(--hh-border);
+  border-radius: var(--hh-radius);
+  box-shadow: var(--hh-shadow);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.kpi-card:hover {
+  border-color: var(--hh-border-strong);
+  box-shadow: var(--hh-shadow-hover);
+}
+
+/* 仅用左侧 3px 细条区分语义，避免整卡高饱和渐变造成视觉疲劳 */
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 16px;
+  bottom: 16px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--hh-primary);
+}
+
+.kpi-card.is-success::before { background: var(--hh-success); }
+.kpi-card.is-warning::before { background: var(--hh-warning); }
+.kpi-card.is-danger::before  { background: var(--hh-danger); }
+
+.kpi-label {
+  font-size: 13px;
+  color: var(--hh-muted);
+  margin-bottom: 8px;
+}
+
+.kpi-value {
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--hh-text);
+}
+
+.kpi-meta {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--hh-text-secondary);
+}
+
+/* ==========================================================================
+   行测 / 申论刷题专注排版：限制阅读栏宽 + 右侧吸顶答题卡
+   ========================================================================== */
+.exam-focus-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 820px) 280px;
+  justify-content: center;
+  gap: 24px;
+  align-items: start;
+}
+
+.question-panel {
+  background: var(--hh-surface);
+  border: 1px solid var(--hh-border);
+  border-radius: var(--hh-radius);
+  padding: 28px 32px;
+  box-shadow: var(--hh-shadow);
+}
+
+/* 题干排版：行宽受控、行高舒展，适合长篇言语理解与资料分析 */
+.stem {
+  max-width: 74ch;
+  font-size: 16.5px;
+  line-height: 1.88;
+  color: var(--hh-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  letter-spacing: 0.01em;
+}
+
+/* 选项卡片与“排除法”删除态 */
+.option-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 16px;
+  margin-top: 12px;
+  border: 1px solid var(--hh-border);
+  border-radius: var(--hh-radius-sm);
+  background: var(--hh-surface);
+  color: var(--hh-text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.option-item:hover {
+  border-color: var(--hh-primary);
+  background: var(--hh-hover-bg);
+}
+
+.option-item.is-selected {
+  border-color: var(--hh-primary);
+  background: var(--hh-tint);
+}
+
+.option-item.is-correct {
+  border-color: var(--hh-success);
+  background: var(--hh-success-soft);
+}
+
+.option-item.is-wrong {
+  border-color: var(--hh-danger);
+  background: var(--hh-danger-soft);
+}
+
+/* 右键/按钮标记排除干扰项 */
+.option-item.is-eliminated {
+  opacity: 0.48;
+  text-decoration: line-through;
+  background: var(--hh-surface-subtle);
+}
+
+.answer-sheet-aside {
+  position: sticky;
+  top: calc(var(--header-height) + 20px);
+  background: var(--hh-surface);
+  border: 1px solid var(--hh-border);
+  border-radius: var(--hh-radius);
+  padding: 20px;
+  box-shadow: var(--hh-shadow);
+}
+
+/* ==========================================================================
+   响应式适配
+   ========================================================================== */
+@media (max-width: 1120px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .exam-focus-layout {
+    grid-template-columns: 1fr;
+  }
+  .answer-sheet-aside {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .question-panel {
+    padding: 20px 16px;
+  }
+  .stem {
+    font-size: 15.5px;
+    line-height: 1.8;
+  }
 }

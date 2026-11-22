@@ -12,91 +12,16 @@
       </el-button>
     </div>
 
-    <div v-else-if="questions.length > 0" class="exam-content">
-      <!-- Fixed Header with Timer -->
-      <div class="exam-header">
-        <div class="header-left">
-          <h3>{{ examTitle }}</h3>
-          <span class="question-count">共 {{ questions.length }} 题</span>
-        </div>
-        <div class="header-right">
-          <div class="timer" :class="{ warning: timeLeft < 300 }">
-            <el-icon><Clock /></el-icon>
-            <span>{{ formatTime(timeLeft) }}</span>
-          </div>
-          <el-button type="primary" @click="handleSubmit">
-            提交试卷
-          </el-button>
-        </div>
-      </div>
-
-      <!-- Main Content -->
-      <div class="exam-body">
-        <!-- Question Navigation Sidebar -->
-        <div class="question-nav">
-          <div class="nav-title">答题卡</div>
-          <div class="nav-grid">
-            <div
-              v-for="(q, idx) in questions"
-              :key="q.id"
-              class="nav-item"
-              :class="{
-                active: currentIndex === idx,
-                answered: answers[idx]
-              }"
-              @click="currentIndex = idx"
-            >
-              {{ idx + 1 }}
-            </div>
-          </div>
-          <div class="nav-stats">
-            <div class="stat-row">
-              <span>已答</span>
-              <span class="value">{{ answeredCount }}</span>
-            </div>
-            <div class="stat-row">
-              <span>未答</span>
-              <span class="value">{{ questions.length - answeredCount }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Question Display -->
-        <div class="question-area">
-          <QuestionCard
-            v-if="currentQuestion"
-            :question="currentQuestion"
-            :index="currentIndex"
-            :model-value="answers[currentIndex]"
-            @update:model-value="handleAnswer"
-            :show-favorite="false"
-          />
-
-          <div class="navigation-buttons">
-            <el-button
-              :disabled="currentIndex === 0"
-              @click="currentIndex--"
-            >
-              上一题
-            </el-button>
-            <el-button
-              v-if="currentIndex < questions.length - 1"
-              type="primary"
-              @click="currentIndex++"
-            >
-              下一题
-            </el-button>
-            <el-button
-              v-else
-              type="success"
-              @click="handleSubmit"
-            >
-              提交试卷
-            </el-button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ExamFocusWorkspace
+      v-else-if="questions.length > 0"
+      :title="examTitle"
+      :questions="focusQuestions"
+      :initial-answers="initialAnswers"
+      :total-seconds="timeLeft"
+      @autosave="handleAutosave"
+      @submit="handleFocusSubmit"
+      @exit="handleExit"
+    />
 
     <!-- Submit Confirmation Dialog -->
     <el-dialog
@@ -151,8 +76,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, Clock } from '@element-plus/icons-vue'
-import QuestionCard from '@/components/QuestionCard.vue'
+import { Loading } from '@element-plus/icons-vue'
+import ExamFocusWorkspace from '@/components/ExamFocusWorkspace.vue'
 import { examApi } from '@/api'
 
 const router = useRouter()
@@ -168,10 +93,7 @@ const timeLeft = ref(0) // seconds
 const showSubmitDialog = ref(false)
 const submitting = ref(false)
 
-let timerInterval = null
 let sessionData = null
-
-const currentQuestion = computed(() => questions.value[currentIndex.value])
 
 const answeredCount = computed(() =>
   answers.value.filter(a => a).length
@@ -180,6 +102,32 @@ const answeredCount = computed(() =>
 const unansweredCount = computed(() =>
   questions.value.length - answeredCount.value
 )
+
+const focusQuestions = computed(() => questions.value.map((question) => {
+  const options = Array.isArray(question.options)
+    ? question.options.map((option, index) => ({
+        key: option.key || option.value || String.fromCharCode(65 + index),
+        text: option.text || option.label || ''
+      }))
+    : ['A', 'B', 'C', 'D']
+        .map((key) => ({ key, text: question[`option${key}`] }))
+        .filter((option) => option.text)
+  return {
+    id: question.id ?? question.questionId,
+    category: question.categoryName || question.category || '行测单选',
+    difficulty: question.difficulty || question.difficultyLevel,
+    stem: question.questionStem || question.stem || '',
+    options
+  }
+}))
+
+const initialAnswers = computed(() => Object.fromEntries(
+  questions.value.map((question, index) => [question.id ?? question.questionId, answers.value[index] || ''])
+))
+
+function draftKey() {
+  return `honghu-exam-draft:${sessionData?.examId || route.params.examId}`
+}
 
 async function loadExam() {
   try {
@@ -196,6 +144,20 @@ async function loadExam() {
     sessionData = JSON.parse(sessionStr)
     examTitle.value = sessionData.examTitle
 
+    // Get questions from session data
+    questions.value = sessionData.questions || []
+    answers.value = new Array(questions.value.length).fill('')
+    const savedDraft = localStorage.getItem(draftKey())
+    if (savedDraft) {
+      const draft = JSON.parse(savedDraft)
+      answers.value = questions.value.map((question) => draft.answers?.[question.id ?? question.questionId] || '')
+    }
+
+    if (questions.value.length === 0) {
+      error.value = '试卷加载失败'
+      return
+    }
+
     // Calculate time left
     const elapsed = Math.floor((Date.now() - sessionData.startTime) / 1000)
     timeLeft.value = Math.max(0, sessionData.duration * 60 - elapsed)
@@ -206,40 +168,12 @@ async function loadExam() {
       return
     }
 
-    // Get questions from session data
-    questions.value = sessionData.questions || []
-    answers.value = new Array(questions.value.length).fill('')
-
-    if (questions.value.length === 0) {
-      error.value = '试卷加载失败'
-      return
-    }
-
-    // Start timer
-    startTimer()
-
   } catch (err) {
     console.error('Failed to load exam:', err)
     error.value = err.message || '加载失败'
   } finally {
     loading.value = false
   }
-}
-
-function startTimer() {
-  timerInterval = setInterval(() => {
-    if (timeLeft.value > 0) {
-      timeLeft.value--
-    } else {
-      clearInterval(timerInterval)
-      ElMessage.warning('考试时间到，自动提交')
-      autoSubmit()
-    }
-  }, 1000)
-}
-
-function handleAnswer(value) {
-  answers.value[currentIndex.value] = value
 }
 
 function formatTime(seconds) {
@@ -254,7 +188,32 @@ function formatTime(seconds) {
 }
 
 function handleSubmit() {
+  if (sessionData) {
+    timeLeft.value = Math.max(0, sessionData.duration * 60 - Math.floor((Date.now() - sessionData.startTime) / 1000))
+  }
   showSubmitDialog.value = true
+}
+
+function handleAutosave(payload) {
+  const answerMap = payload?.answers || Object.fromEntries(
+    Object.entries(payload || {}).filter(([key]) => key !== 'autoSubmitted')
+  )
+  answers.value = questions.value.map((question) => answerMap[question.id ?? question.questionId] || '')
+  localStorage.setItem(draftKey(), JSON.stringify({ answers: answerMap, savedAt: Date.now() }))
+}
+
+function handleFocusSubmit(payload) {
+  handleAutosave(payload)
+  if (payload?.autoSubmitted) {
+    ElMessage.warning('考试时间到，自动提交')
+    autoSubmit()
+    return
+  }
+  handleSubmit()
+}
+
+function handleExit() {
+  router.push('/exams')
 }
 
 async function confirmSubmit() {
@@ -277,6 +236,7 @@ async function confirmSubmit() {
 
     // Clear session
     sessionStorage.removeItem('exam-session')
+    localStorage.removeItem(draftKey())
     showSubmitDialog.value = false
 
     router.push({ name: 'exam-history' })
@@ -302,6 +262,7 @@ async function autoSubmit() {
 
     await examApi.submit(sessionData.examId, answerList, duration)
     sessionStorage.removeItem('exam-session')
+    localStorage.removeItem(draftKey())
 
     ElMessageBox.alert('考试时间已到，已自动提交', '提示', {
       confirmButtonText: '查看成绩',
@@ -316,22 +277,18 @@ async function autoSubmit() {
   }
 }
 
+const handleBeforeUnload = (e) => {
+  e.preventDefault()
+  e.returnValue = ''
+}
+
 onMounted(() => {
   loadExam()
-
-  // Warn before leaving
-  const handleBeforeUnload = (e) => {
-    e.preventDefault()
-    e.returnValue = ''
-  }
   window.addEventListener('beforeunload', handleBeforeUnload)
+})
 
-  onUnmounted(() => {
-    window.removeEventListener('beforeunload', handleBeforeUnload)
-    if (timerInterval) {
-      clearInterval(timerInterval)
-    }
-  })
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 </script>
 

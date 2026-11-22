@@ -3,7 +3,7 @@
 $ErrorActionPreference = 'Stop'
 $exitCode = 0
 try {
-    $listeners = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -in 8080, 7001 }
+    $listeners = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -in 18080, 8080, 7401 }
     $processIds = $listeners.OwningProcess | Select-Object -Unique
     foreach ($projectProcessId in $processIds) {
         $process = Get-CimInstance Win32_Process -Filter "ProcessId=$projectProcessId"
